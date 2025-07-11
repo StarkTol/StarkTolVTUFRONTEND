@@ -60,10 +60,10 @@ export default function AirtimePage() {
 
   // Mock data for providers
   const providers = [
-    { id: "mtn", name: "MTN", logo: "/placeholder.svg?height=60&width=60" },
-    { id: "airtel", name: "Airtel", logo: "/placeholder.svg?height=60&width=60" },
-    { id: "glo", name: "Glo", logo: "/placeholder.svg?height=60&width=60" },
-    { id: "9mobile", name: "9mobile", logo: "/placeholder.svg?height=60&width=60" },
+    { id: "mtn", name: "MTN", logo: "/mtn.logo.jpg?height=60&width=60" },
+    { id: "airtel", name: "Airtel", logo: "/airtel.logo.jpg?height=60&width=60" },
+    { id: "glo", name: "Glo", logo: "/glo.logo.jpg?height=60&width=60" },
+    { id: "9mobile", name: "9mobile", logo: "/etisalate.logo.jpg?height=60&width=60" },
   ]
 
   const handleProviderSelect = (providerId: string) => {

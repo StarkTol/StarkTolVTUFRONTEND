@@ -65,11 +65,10 @@ export default function ExamCardsPage() {
 
   // Mock data for providers
   const providers = [
-    { id: "waec", name: "WAEC", logo: "/placeholder.svg?height=60&width=60", price: "₦3,500" },
-    { id: "jamb", name: "JAMB", logo: "/placeholder.svg?height=60&width=60", price: "₦4,700" },
-    { id: "neco", name: "NECO", logo: "/placeholder.svg?height=60&width=60", price: "₦3,500" },
-    { id: "nabteb", name: "NABTEB", logo: "/placeholder.svg?height=60&width=60", price: "₦3,200" },
-    { id: "gce", name: "GCE", logo: "/placeholder.svg?height=60&width=60", price: "₦3,800" },
+    { id: "waec", name: "WAEC", logo: "/waec.logo.jpg?height=60&width=60", price: "₦3,500" },
+    { id: "jamb", name: "JAMB", logo: "/jamb.logo.jpg?height=60&width=60", price: "₦4,700" },
+    { id: "neco", name: "NECO", logo: "/neco.jpg?height=60&width=60", price: "₦3,500" },
+    { id: "nabteb", name: "NABTEB", logo: "/nabteb.jpg?height=60&width=60", price: "₦3,200" },
   ]
 
   const handleProviderSelect = (providerId: string) => {

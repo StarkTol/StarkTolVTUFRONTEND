@@ -71,10 +71,10 @@ export default function CablePage() {
 
   // Mock data for providers
   const providers = [
-    { id: "dstv", name: "DSTV", logo: "/placeholder.svg?height=60&width=60" },
-    { id: "gotv", name: "GOTV", logo: "/placeholder.svg?height=60&width=60" },
-    { id: "startimes", name: "Startimes", logo: "/placeholder.svg?height=60&width=60" },
-    { id: "showmax", name: "Showmax", logo: "/placeholder.svg?height=60&width=60" },
+    { id: "dstv", name: "DSTV", logo: "/dstv.logo.jpg?height=60&width=60" },
+    { id: "gotv", name: "GOTV", logo: "/gotv.logo.jpg?height=60&width=60" },
+    { id: "startimes", name: "Startimes", logo: "/startime.logo.jpg?height=60&width=60" },
+    { id: "showmax", name: "Showmax", logo: "/Showmax.jpg?height=60&width=60" },
   ]
 
   // Mock data for packages

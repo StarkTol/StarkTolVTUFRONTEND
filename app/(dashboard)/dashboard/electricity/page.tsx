@@ -72,12 +72,10 @@ export default function ElectricityPage() {
 
   // Mock data for providers
   const providers = [
-    { id: "ekedc", name: "EKEDC", logo: "/placeholder.svg?height=60&width=60" },
-    { id: "ikedc", name: "IKEDC", logo: "/placeholder.svg?height=60&width=60" },
-    { id: "aedc", name: "AEDC", logo: "/placeholder.svg?height=60&width=60" },
-    { id: "phedc", name: "PHEDC", logo: "/placeholder.svg?height=60&width=60" },
-    { id: "ibedc", name: "IBEDC", logo: "/placeholder.svg?height=60&width=60" },
-    { id: "eedc", name: "EEDC", logo: "/placeholder.svg?height=60&width=60" },
+    { id: "ekedc", name: "EKEDC", logo: "/ekedc.logo.jpg?height=60&width=60" },
+    { id: "ikedc", name: "IKEDC", logo: "/ie.logo.jpg?height=60&width=60" },
+    { id: "phedc", name: "PHEDC", logo: "/PHEDC.jpg?height=60&width=60" },
+    { id: "ibedc", name: "IBEDC", logo: "/ibedc.logo.jpg?height=60&width=60" },
   ]
 
   const handleProviderSelect = (providerId: string) => {
