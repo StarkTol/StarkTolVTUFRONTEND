@@ -7,15 +7,16 @@ import { Clock, CreditCard, Headphones, ChevronRight, Star } from "lucide-react"
 export default function HomePage() {
   // Mock data for service providers
   const serviceProviders = [
-    { id: 1, name: "MTN", logo: "/placeholder.svg?height=60&width=120" },
-    { id: 2, name: "Airtel", logo: "/placeholder.svg?height=60&width=120" },
-    { id: 3, name: "Glo", logo: "/placeholder.svg?height=60&width=120" },
-    { id: 4, name: "9mobile", logo: "/placeholder.svg?height=60&width=120" },
-    { id: 5, name: "DSTV", logo: "/placeholder.svg?height=60&width=120" },
-    { id: 6, name: "GOTV", logo: "/placeholder.svg?height=60&width=120" },
-    { id: 7, name: "EKEDC", logo: "/placeholder.svg?height=60&width=120" },
-    { id: 8, name: "IKEDC", logo: "/placeholder.svg?height=60&width=120" },
-    { id: 9, name: "AEDC", logo: "/placeholder.svg?height=60&width=120" },
+    { id: 1, name: "MTN", logo: "/mtn.logo.jpg?height=60&width=120" },
+    { id: 2, name: "Airtel", logo: "/airtel.logo.jpg?height=60&width=120" },
+    { id: 3, name: "Glo", logo: "/glo.logo.jpg?height=60&width=120" },
+    { id: 4, name: "9mobile", logo: "/etisalate.logo.jpg?height=60&width=120" },
+    { id: 5, name: "DSTV", logo: "/dstv.logo.jpg?height=60&width=120" },
+    { id: 6, name: "GOTV", logo: "/gotv.logo.jpg?height=60&width=120" },
+    { id: 7, name: "EKEDC", logo: "/ekedc.logo.jpg?height=60&width=120" },
+    { id: 8, name: "IKEDC", logo: "/ie.logo.jpg?height=60&width=120" },
+    { id: 9, name: "AEDC", logo: "/aedc.logo.jpg?height=60&width=120" },
+    { id: 9, name: "STARTIME", logo: "/startime.logo.jpg?height=60&width=120" },
   ]
 
   // Mock data for testimonials
@@ -25,21 +26,21 @@ export default function HomePage() {
       name: "John Doe",
       comment: "StarkTol VTU has made buying airtime and data so easy. The platform is fast and reliable!",
       rating: 5,
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/placeholder11.svg?height=200&width=300",
     },
     {
       id: 2,
       name: "Jane Smith",
       comment: "I love how I can pay all my bills in one place. The auto-refill feature is a game changer!",
       rating: 5,
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/placeholder22.svg?height=200&width=300",
     },
     {
       id: 3,
       name: "David Wilson",
       comment: "The best VTU platform I've used. Their customer service is exceptional and transactions are instant.",
       rating: 5,
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/placeholder33.svg?height=200&width=300",
     },
   ]
 
@@ -69,7 +70,7 @@ export default function HomePage() {
           <div className="relative aspect-video overflow-hidden rounded-lg shadow-xl">
             <img
               src="/placeholder.svg?height=400&width=600"
-              alt="Babs VTU Platform"
+              alt="StarkTol VTU Platform"
               className="h-full w-full object-cover"
             />
           </div>
