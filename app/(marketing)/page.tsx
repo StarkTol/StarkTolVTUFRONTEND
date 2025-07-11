@@ -16,7 +16,7 @@ export default function HomePage() {
     { id: 7, name: "EKEDC", logo: "/ekedc.logo.jpg?height=60&width=120" },
     { id: 8, name: "IKEDC", logo: "/ie.logo.jpg?height=60&width=120" },
     { id: 9, name: "IBEDC", logo: "/ibedc.logo.jpg?height=60&width=120" },
-    { id: 9, name: "STARTIME", logo: "/startime.logo.jpg?height=60&width=120" },
+    { id: 9, name: "STARTIMES", logo: "/startime.logo.jpg?height=60&width=120" },
   ]
 
   // Mock data for testimonials
@@ -26,21 +26,21 @@ export default function HomePage() {
       name: "John Doe",
       comment: "StarkTol VTU has made buying airtime and data so easy. The platform is fast and reliable!",
       rating: 5,
-      image: "/placeholder11.svg?height=200&width=300",
+      image: "/John Doe.jpg?height=200&width=300",
     },
     {
       id: 2,
       name: "Jane Smith",
       comment: "I love how I can pay all my bills in one place. The auto-refill feature is a game changer!",
       rating: 5,
-      image: "/placeholder22.svg?height=200&width=300",
+      image: "/Jane Smith.jpg?height=200&width=300",
     },
     {
       id: 3,
       name: "David Wilson",
       comment: "The best VTU platform I've used. Their customer service is exceptional and transactions are instant.",
       rating: 5,
-      image: "/placeholder33.svg?height=200&width=300",
+      image: "/David Wilson.jpg?height=200&width=300",
     },
   ]
 
