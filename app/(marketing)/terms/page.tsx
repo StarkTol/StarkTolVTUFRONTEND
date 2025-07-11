@@ -5,13 +5,13 @@ export default function TermsPage() {
 
       <div className="prose prose-slate max-w-none dark:prose-invert">
         <p className="lead">
-          Welcome to Babs VTU. These terms and conditions outline the rules and regulations for the use of Babs VTU's
+          Welcome to StarkTol VTU. These terms and conditions outline the rules and regulations for the use of StarkTol VTU's
           website and services.
         </p>
 
         <p>
           By accessing this website or using our services, we assume you accept these terms and conditions in full. Do
-          not continue to use Babs VTU's website or services if you do not accept all of the terms and conditions stated
+          not continue to use StarkTol VTU's website or services if you do not accept all of the terms and conditions stated
           on this page.
         </p>
 
@@ -40,7 +40,7 @@ export default function TermsPage() {
 
         <h2>3. Services and Payments</h2>
         <p>
-          Babs VTU provides virtual top-up services including but not limited to airtime recharge, data bundles, cable
+          StarkTol VTU provides virtual top-up services including but not limited to airtime recharge, data bundles, cable
           TV subscriptions, electricity bill payments, and exam cards.
         </p>
         <p>
@@ -88,12 +88,12 @@ export default function TermsPage() {
         </p>
         <p>
           Copying, redistribution, use, or publication by you of any such content or any part of the website is
-          prohibited without express written permission from Babs VTU.
+          prohibited without express written permission from StarkTol VTU.
         </p>
 
         <h2>8. Limitation of Liability</h2>
         <p>
-          In no event shall Babs VTU be liable for any direct, indirect, incidental, special, or consequential damages
+          In no event shall StarkTol VTU be liable for any direct, indirect, incidental, special, or consequential damages
           arising out of or in any way connected with the use of our services.
         </p>
 
@@ -119,9 +119,9 @@ export default function TermsPage() {
         <h2>12. Contact Information</h2>
         <p>If you have any questions about these Terms and Conditions, please contact us at:</p>
         <p>
-          Email: legal@babsvtu.com
+          Email: starktol@outlook.com
           <br />
-          Phone: +234 801 234 5678
+          Phone: +234-9155130506
         </p>
 
         <p className="text-sm text-muted-foreground mt-8">Last updated: May 1, 2023</p>

@@ -78,7 +78,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="mb-1 font-semibold">Phone & WhatsApp</h3>
-                    <p className="text-muted-foreground">07034215346</p>
+                    <p className="text-muted-foreground">+234-9155130506</p>
                   </div>
                 </CardContent>
               </Card>
@@ -90,7 +90,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="mb-1 font-semibold">Email</h3>
-                    <p className="text-muted-foreground">cashdrop22@gmail.com</p>
+                    <p className="text-muted-foreground">starktol@outlook.com</p>
                   </div>
                 </CardContent>
               </Card>

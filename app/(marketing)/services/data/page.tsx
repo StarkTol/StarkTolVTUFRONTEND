@@ -6,10 +6,10 @@ import { ArrowRight, Clock, Percent, Zap } from "lucide-react"
 export default function DataPage() {
   // Network providers
   const providers = [
-    { name: "MTN", logo: "/placeholder.svg?height=60&width=120" },
-    { name: "Airtel", logo: "/placeholder.svg?height=60&width=120" },
-    { name: "Glo", logo: "/placeholder.svg?height=60&width=120" },
-    { name: "9mobile", logo: "/placeholder.svg?height=60&width=120" },
+    { name: "MTN", logo: "/mtn.logo.jpg?height=60&width=120" },
+    { name: "Airtel", logo: "/airtel.logo.jpg?height=60&width=120" },
+    { name: "Glo", logo: "/glo.logo.jpg?height=60&width=120" },
+    { name: "9mobile", logo: "/etisalate.logo.jpg?height=60&width=120" },
   ]
 
   // Benefits

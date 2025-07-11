@@ -100,7 +100,7 @@ export default function CableServicePage() {
           </div>
           <div className="relative h-[300px] rounded-xl overflow-hidden">
             <Image
-              src="/placeholder.svg?height=600&width=800"
+              src="/How It Works.jpg?height=600&width=800"
               alt="Cable TV subscription illustration"
               fill
               className="object-cover"

@@ -7,12 +7,12 @@ export default function FAQPage() {
     {
       id: "general",
       title: "General Questions",
-      description: "Basic information about Babs VTU",
+      description: "Basic information about StarkTol VTU",
       faqs: [
         {
-          question: "What is Babs VTU?",
+          question: "What is StarkTol VTU?",
           answer:
-            "Babs VTU is a virtual top-up platform that allows you to purchase airtime, data bundles, pay for electricity bills, cable TV subscriptions, and more. We provide fast, reliable, and automated services at competitive prices.",
+            "StarkTol VTU is a virtual top-up platform that allows you to purchase airtime, data bundles, pay for electricity bills, cable TV subscriptions, and more. We provide fast, reliable, and automated services at competitive prices.",
         },
         {
           question: "How do I create an account?",
@@ -20,9 +20,9 @@ export default function FAQPage() {
             "To create an account, click on the 'Register' button on the homepage. Fill in your details including your name, email address, phone number, and create a password. Verify your email address and you're good to go!",
         },
         {
-          question: "Is Babs VTU secure?",
+          question: "Is StarkTol VTU secure?",
           answer:
-            "Yes, Babs VTU employs industry-standard security measures to protect your data and transactions. We use encryption for all sensitive information and implement multiple layers of security to ensure your account is safe.",
+            "Yes, StarkTol VTU employs industry-standard security measures to protect your data and transactions. We use encryption for all sensitive information and implement multiple layers of security to ensure your account is safe.",
         },
         {
           question: "What payment methods are accepted?",
@@ -37,9 +37,9 @@ export default function FAQPage() {
       description: "Information about our services",
       faqs: [
         {
-          question: "What services does Babs VTU offer?",
+          question: "What services does StarkTol VTU offer?",
           answer:
-            "Babs VTU offers a wide range of services including airtime recharge, data bundles, cable TV subscriptions (DSTV, GOTV, Startimes), electricity bill payments, exam cards (WAEC, NECO, JAMB), and recharge card printing.",
+            "StarkTol VTU offers a wide range of services including airtime recharge, data bundles, cable TV subscriptions (DSTV, GOTV, Startimes), electricity bill payments, exam cards (WAEC, NECO, JAMB), and recharge card printing.",
         },
         {
           question: "How fast are transactions processed?",

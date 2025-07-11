@@ -5,7 +5,7 @@ export default function PrivacyPage() {
 
       <div className="prose prose-slate max-w-none dark:prose-invert">
         <p className="lead">
-          At Babs VTU, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and
+          At StarkTol VTU, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and
           safeguard your information when you use our website and services.
         </p>
 
@@ -129,9 +129,9 @@ export default function PrivacyPage() {
         <h2>9. Contact Us</h2>
         <p>If you have questions or comments about this Privacy Policy, please contact us at:</p>
         <p>
-          Email: privacy@babsvtu.com
+          Email: starktol@outlook.com
           <br />
-          Phone: +234 801 234 5678
+          Phone: +234-9155130506
         </p>
 
         <p className="text-sm text-muted-foreground mt-8">Last updated: May 1, 2023</p>

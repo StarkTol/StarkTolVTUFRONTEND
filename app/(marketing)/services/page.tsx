@@ -64,18 +64,18 @@ export default function ServicesPage() {
 
   // Service providers
   const serviceProviders = [
-    { name: "MTN", category: "Telecom", logo: "/placeholder.svg?height=60&width=120" },
-    { name: "Airtel", category: "Telecom", logo: "/placeholder.svg?height=60&width=120" },
-    { name: "Glo", category: "Telecom", logo: "/placeholder.svg?height=60&width=120" },
-    { name: "9mobile", category: "Telecom", logo: "/placeholder.svg?height=60&width=120" },
-    { name: "DSTV", category: "Cable TV", logo: "/placeholder.svg?height=60&width=120" },
-    { name: "GOTV", category: "Cable TV", logo: "/placeholder.svg?height=60&width=120" },
-    { name: "Startimes", category: "Cable TV", logo: "/placeholder.svg?height=60&width=120" },
-    { name: "EKEDC", category: "Electricity", logo: "/placeholder.svg?height=60&width=120" },
-    { name: "IKEDC", category: "Electricity", logo: "/placeholder.svg?height=60&width=120" },
-    { name: "AEDC", category: "Electricity", logo: "/placeholder.svg?height=60&width=120" },
-    { name: "WAEC", category: "Education", logo: "/placeholder.svg?height=60&width=120" },
-    { name: "JAMB", category: "Education", logo: "/placeholder.svg?height=60&width=120" },
+    { name: "MTN", category: "Telecom", logo: "/mtn.logo.jpg?height=60&width=120" },
+    { name: "Airtel", category: "Telecom", logo: "/airtel.logo.jpg?height=60&width=120" },
+    { name: "Glo", category: "Telecom", logo: "/glo.logo.jpg?height=60&width=120" },
+    { name: "9mobile", category: "Telecom", logo: "/etisalate.logo.jpg?height=60&width=120" },
+    { name: "DSTV", category: "Cable TV", logo: "/dstv.logo.jpg?height=60&width=120" },
+    { name: "GOTV", category: "Cable TV", logo: "/gotv.logo.jpg?height=60&width=120" },
+    { name: "Startimes", category: "Cable TV", logo: "/startime.logo.jpg?height=60&width=120" },
+    { name: "EKEDC", category: "Electricity", logo: "/ekedc.logo.jpg?height=60&width=120" },
+    { name: "IKEDC", category: "Electricity", logo: "/ie.logo.jpg?height=60&width=120" },
+    { name: "IBEDC", category: "Electricity", logo: "/ibedc.logo.jpg?height=60&width=120" },
+    { name: "WAEC", category: "Education", logo: "/waec.logo.jpg?height=60&width=120" },
+    { name: "JAMB", category: "Education", logo: "/jamb.logo.jpg?height=60&width=120" },
   ]
 
   return (
@@ -242,7 +242,7 @@ export default function ServicesPage() {
             </div>
             <div className="relative aspect-square overflow-hidden rounded-lg md:aspect-auto">
               <img
-                src="/placeholder.svg?height=600&width=600"
+                src="/reseller.logo.jpg?height=600&width=600"
                 alt="Reseller Dashboard"
                 className="h-full w-full object-cover"
               />
@@ -256,7 +256,7 @@ export default function ServicesPage() {
         <div className="container text-center text-white">
           <h2 className="mb-6 text-3xl font-bold">Ready to Get Started?</h2>
           <p className="mx-auto mb-8 max-w-2xl text-lg">
-            Join thousands of satisfied customers using Babs VTU for their everyday digital services.
+            Join thousands of satisfied customers using StarkTol VTU for their everyday digital services.
           </p>
           <div className="flex flex-col justify-center gap-4 sm:flex-row">
             <Button variant="secondary" size="lg" asChild>

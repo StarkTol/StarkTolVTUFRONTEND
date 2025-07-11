@@ -107,7 +107,7 @@ export default function ElectricityServicePage() {
           </div>
           <div className="relative h-[300px] rounded-xl overflow-hidden">
             <Image
-              src="/placeholder.svg?height=600&width=800"
+              src="/How It Works.jpg?height=600&width=800"
               alt="Electricity bill payment illustration"
               fill
               className="object-cover"

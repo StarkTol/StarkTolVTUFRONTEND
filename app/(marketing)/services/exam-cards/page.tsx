@@ -104,7 +104,7 @@ export default function ExamCardsServicePage() {
           </div>
           <div className="relative h-[300px] rounded-xl overflow-hidden">
             <Image
-              src="/placeholder.svg?height=600&width=800"
+              src="/How It Works.jpg?height=600&width=800"
               alt="Exam cards illustration"
               fill
               className="object-cover"

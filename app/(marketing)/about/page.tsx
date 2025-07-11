@@ -7,27 +7,27 @@ export default function AboutPage() {
   // Team members data
   const teamMembers = [
     {
-      name: "Babatope Olaniyi",
+      name: "Akanni Husseni",
       role: "Founder & CEO",
-      image: "/placeholder.svg?height=300&width=300",
+      image: "/ceo.jpg?height=300&width=300",
       bio: "Visionary entrepreneur with over 10 years of experience in the telecom and fintech industry.",
     },
     {
-      name: "Sarah Johnson",
+      name: "Akanni Husseni",
       role: "Chief Technology Officer",
-      image: "/placeholder.svg?height=300&width=300",
+      image: "/ceo.jpg?height=300&width=300",
       bio: "Tech expert with a passion for building scalable and secure financial systems.",
     },
     {
-      name: "Michael Adeyemi",
-      role: "Head of Operations",
-      image: "/placeholder.svg?height=300&width=300",
+      name: "Demilade Jacob",
+      role: "Co Founder & Head of Operations",
+      image: "/cofounder.jpg?height=300&width=300",
       bio: "Operations specialist ensuring smooth service delivery and customer satisfaction.",
     },
     {
-      name: "Chioma Okafor",
+      name: "Abubakri Yusuff",
       role: "Customer Success Manager",
-      image: "/placeholder.svg?height=300&width=300",
+      image: "/support.jpg?height=300&width=300",
       bio: "Dedicated to providing exceptional support and ensuring client satisfaction.",
     },
   ]
