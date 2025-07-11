@@ -41,7 +41,7 @@ export default function AboutPage() {
             <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
               About{" "}
               <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-                Babs VTU
+                StarkTol VTU
               </span>
             </h1>
             <p className="mb-8 text-xl text-muted-foreground">
@@ -59,7 +59,7 @@ export default function AboutPage() {
             <h2 className="mb-6 text-3xl font-bold">Our Story</h2>
             <div className="space-y-4 text-muted-foreground">
               <p>
-                Babs VTU was founded in 2020 with a simple yet powerful vision: to create a fully automated VTU platform
+                StarkTol VTU was founded in 2020 with a simple yet powerful vision: to create a fully automated VTU platform
                 that makes digital services accessible to all Nigerians.
               </p>
               <p>
@@ -82,8 +82,8 @@ export default function AboutPage() {
           </div>
           <div className="relative aspect-square overflow-hidden rounded-lg">
             <img
-              src="/placeholder.svg?height=600&width=600"
-              alt="Babs VTU Team"
+              src="/our.jpg?height=600&width=600"
+              alt="StarkTol VTU Team"
               className="h-full w-full object-cover"
             />
           </div>
