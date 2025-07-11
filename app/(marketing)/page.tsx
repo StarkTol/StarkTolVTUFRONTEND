@@ -15,7 +15,7 @@ export default function HomePage() {
     { id: 6, name: "GOTV", logo: "/gotv.logo.jpg?height=60&width=120" },
     { id: 7, name: "EKEDC", logo: "/ekedc.logo.jpg?height=60&width=120" },
     { id: 8, name: "IKEDC", logo: "/ie.logo.jpg?height=60&width=120" },
-    { id: 9, name: "AEDC", logo: "/aedc.logo.jpg?height=60&width=120" },
+    { id: 9, name: "IBEDC", logo: "/ibedc.logo.jpg?height=60&width=120" },
     { id: 9, name: "STARTIME", logo: "/startime.logo.jpg?height=60&width=120" },
   ]
 
