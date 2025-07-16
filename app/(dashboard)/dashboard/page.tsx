@@ -54,25 +54,36 @@ export default function DashboardPage() {
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem("access_token")
-        if (!token) return
+        if (!token) {
+          console.warn("Access token not found.")
+          return
+        }
 
-        const headers = { Authorization: `Bearer ${token}` }
+        const headers = {
+          Authorization: `Bearer ${token}`
+        }
 
         const [profileRes, transactionsRes, statsRes] = await Promise.all([
           axios.get("https://backend-066c.onrender.com/api/v1/user/profile", { headers }),
           axios.get("https://backend-066c.onrender.com/api/v1/transactions?limit=5", { headers }),
-          axios.get("https://backend-066c.onrender.com/api/v1/stats/usage", { headers }),
+          axios.get("https://backend-066c.onrender.com/api/v1/stats/usage", { headers })
         ])
 
-        const profile = profileRes.data
+        const profile = profileRes.data?.data || {}
+        const transactionsList = transactionsRes.data?.transactions || []
+        const stats = statsRes.data?.data || {}
+
         setWalletBalance(`₦${(profile.wallet_balance || 0).toLocaleString()}`)
         setTotalSpent(profile.total_spent || 0)
         setReferralBonus(profile.referral_bonus || 0)
-
-        setTransactions(transactionsRes.data.transactions || [])
-        setUsageStats(statsRes.data || usageStats)
-      } catch (err) {
-        console.error("Error loading dashboard data:", err)
+        setTransactions(transactionsList)
+        setUsageStats({
+          weekly: stats.weekly || { airtime: 0, data: 0 },
+          monthly: stats.monthly || { airtime: 0, data: 0 },
+          yearly: stats.yearly || { airtime: 0, data: 0 },
+        })
+      } catch (error) {
+        console.error("Dashboard loading error:", error)
       } finally {
         setLoading(false)
       }
@@ -201,7 +212,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Usage Stats */}
+        {/* Usage Statistics */}
         <Card className="md:col-span-3">
           <CardHeader>
             <CardTitle>Usage Statistics</CardTitle>

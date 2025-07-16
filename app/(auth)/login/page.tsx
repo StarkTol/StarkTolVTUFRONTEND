@@ -4,6 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/context/authContext" // ✅ ADDED
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,10 +18,11 @@ import {
 } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
-import api from "@/lib/api" // ✅ uses your custom axios instance
+import api from "@/lib/api"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth() // ✅ ADDED
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
@@ -51,10 +53,12 @@ export default function LoginPage() {
       })
 
       if (response.data.success) {
-        const { user } = response.data.data
+        const { user, accessToken, refreshToken } = response.data.data
 
-        // Store user and rememberMe in localStorage
-        localStorage.setItem("user", JSON.stringify(user))
+        // ✅ Proper auth login
+        login(user, accessToken, refreshToken)
+
+        // Optional: store rememberMe flag
         if (formData.rememberMe) {
           localStorage.setItem("remember_me", "true")
         }
