@@ -1,14 +1,22 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import axios from "axios"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 
@@ -31,15 +39,49 @@ export default function LoginPage() {
     setFormData((prev) => ({ ...prev, rememberMe: checked }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simulate login process
-    setTimeout(() => {
+    try {
+      const response = await axios.post(
+        "https://backend-066c.onrender.com/api/v1/auth/login",
+        {
+          email: formData.email,
+          password: formData.password,
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      )
+
+      if (response.data.success) {
+        const { access_token, refresh_token, user } = response.data.data
+
+        // Store in localStorage
+        localStorage.setItem("access_token", access_token)
+        localStorage.setItem("refresh_token", refresh_token)
+        localStorage.setItem("user", JSON.stringify(user))
+
+        // Optional: Remember Me flag
+        if (formData.rememberMe) {
+          localStorage.setItem("remember_me", "true")
+        }
+
+        // Redirect
+        router.push("/dashboard")
+      } else {
+        alert(response.data.message || "Login failed.")
+      }
+    } catch (error: any) {
+      console.error("Login error:", error)
+      alert(
+        error?.response?.data?.message || "Login failed. Please check your credentials."
+      )
+    } finally {
       setIsLoading(false)
-      router.push("/dashboard")
-    }, 1500)
+    }
   }
 
   return (
@@ -47,7 +89,9 @@ export default function LoginPage() {
       <Card className="mx-auto w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-          <CardDescription>Enter your credentials to access your account</CardDescription>
+          <CardDescription>
+            Enter your credentials to access your account
+          </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
@@ -66,7 +110,10 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-primary hover:underline"
+                >
                   Forgot password?
                 </Link>
               </div>
@@ -92,12 +139,18 @@ export default function LoginPage() {
                   ) : (
                     <Eye className="h-4 w-4 text-muted-foreground" />
                   )}
-                  <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
+                  <span className="sr-only">
+                    {showPassword ? "Hide password" : "Show password"}
+                  </span>
                 </Button>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox id="remember" checked={formData.rememberMe} onCheckedChange={handleCheckboxChange} />
+              <Checkbox
+                id="remember"
+                checked={formData.rememberMe}
+                onCheckedChange={handleCheckboxChange}
+              />
               <Label htmlFor="remember" className="text-sm">
                 Remember me for 30 days
               </Label>
