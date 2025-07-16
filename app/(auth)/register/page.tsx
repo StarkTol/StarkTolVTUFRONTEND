@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -11,13 +10,15 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
+import api from "@/lib/api" // ✅ NEW: Axios instance
 
 export default function RegisterPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
   const [formData, setFormData] = useState({
-    fullName: "",
+    full_name: "",
     email: "",
     phone: "",
     password: "",
@@ -33,15 +34,31 @@ export default function RegisterPage() {
     setFormData((prev) => ({ ...prev, agreeTerms: checked }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setErrorMessage("")
     setIsLoading(true)
 
-    // Simulate registration process
-    setTimeout(() => {
+    try {
+      const payload = {
+        full_name: formData.full_name,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+      }
+
+      const response = await api.post("/auth/register", payload)
+
+      if (response.data.success) {
+        router.push("/login") // redirect to login after success
+      } else {
+        setErrorMessage(response.data.message || "Registration failed.")
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.response?.data?.message || "Something went wrong.")
+    } finally {
       setIsLoading(false)
-      router.push("/dashboard")
-    }, 1500)
+    }
   }
 
   return (
@@ -53,14 +70,16 @@ export default function RegisterPage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
+
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="full_name">Full Name</Label>
               <Input
-                id="fullName"
-                name="fullName"
+                id="full_name"
+                name="full_name"
                 placeholder="John Doe"
                 required
-                value={formData.fullName}
+                value={formData.full_name}
                 onChange={handleChange}
               />
             </div>
@@ -107,11 +126,7 @@ export default function RegisterPage() {
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
                   <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
                 </Button>
               </div>
