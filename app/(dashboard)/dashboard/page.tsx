@@ -1,26 +1,33 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import axios from "axios"
+import Link from "next/link"
+import {
+  BarChart3,
+  Wallet,
+  ArrowUpRight,
+  Phone,
+  Wifi,
+  Tv,
+  Zap,
+  CreditCard,
+  ArrowRight,
+} from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { BarChart3, Wallet, ArrowUpRight, Phone, Wifi, Tv, Zap, CreditCard, ArrowRight } from "lucide-react"
-import Link from "next/link"
 
 export default function DashboardPage() {
-  // Mock data for recent transactions
-  const recentTransactions = [
-    { id: 1, type: "Airtime", provider: "MTN", amount: "₦1,000", date: "Today, 10:30 AM", status: "success" },
-    { id: 2, type: "Data", provider: "Airtel", amount: "₦2,500", date: "Yesterday, 3:15 PM", status: "success" },
-    { id: 3, type: "Cable TV", provider: "DSTV", amount: "₦6,500", date: "23/04/2023, 9:00 AM", status: "success" },
-    {
-      id: 4,
-      type: "Electricity",
-      provider: "EKEDC",
-      amount: "₦10,000",
-      date: "20/04/2023, 11:45 AM",
-      status: "success",
-    },
-  ]
+  const [walletBalance, setWalletBalance] = useState("₦0.00")
+  const [transactions, setTransactions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [usageStats, setUsageStats] = useState({
+    weekly: { airtime: 0, data: 0 },
+    monthly: { airtime: 0, data: 0 },
+    yearly: { airtime: 0, data: 0 },
+  })
 
-  // Mock data for quick services
   const quickServices = [
     { id: 1, name: "Airtime", icon: Phone, color: "bg-blue-500", path: "/dashboard/airtime" },
     { id: 2, name: "Data", icon: Wifi, color: "bg-green-500", path: "/dashboard/data" },
@@ -29,6 +36,33 @@ export default function DashboardPage() {
     { id: 5, name: "Fund Wallet", icon: Wallet, color: "bg-red-500", path: "/dashboard/wallet" },
     { id: 6, name: "Recharge Card", icon: CreditCard, color: "bg-indigo-500", path: "/dashboard/recharge-card" },
   ]
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const token = localStorage.getItem("accessToken")
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        }
+
+        const [profileRes, transactionsRes, statsRes] = await Promise.all([
+          axios.get("https://backend-066c.onrender.com/api/v1/user/profile", { headers }),
+          axios.get("https://backend-066c.onrender.com/api/v1/transactions?limit=5", { headers }),
+          axios.get("https://backend-066c.onrender.com/api/v1/stats/usage", { headers }),
+        ])
+
+        setWalletBalance(`₦${profileRes.data.wallet_balance.toLocaleString()}`)
+        setTransactions(transactionsRes.data.transactions)
+        setUsageStats(statsRes.data)
+      } catch (err) {
+        console.error("Error loading dashboard data:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDashboardData()
+  }, [])
 
   return (
     <div className="space-y-8">
@@ -49,14 +83,13 @@ export default function DashboardPage() {
             <CardTitle className="text-lg font-medium">Wallet Balance</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">₦125,000.00</div>
+            <div className="text-3xl font-bold">{walletBalance}</div>
             <div className="mt-4 flex items-center justify-between">
               <Button variant="secondary" size="sm" className="text-primary">
                 Fund Wallet
               </Button>
               <span className="flex items-center text-sm">
-                <ArrowUpRight className="mr-1 h-4 w-4" />
-                +12.5%
+                <ArrowUpRight className="mr-1 h-4 w-4" />+12.5%
               </span>
             </div>
           </CardContent>
@@ -77,8 +110,8 @@ export default function DashboardPage() {
             <CardTitle className="text-lg font-medium">Transactions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">245</div>
-            <div className="mt-1 text-xs text-muted-foreground">Last 30 days</div>
+            <div className="text-3xl font-bold">{transactions.length}</div>
+            <div className="mt-1 text-xs text-muted-foreground">Recent</div>
           </CardContent>
         </Card>
 
@@ -112,7 +145,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Activity and Stats */}
+      {/* Recent Transactions */}
       <div className="grid gap-4 md:grid-cols-7">
         <Card className="md:col-span-4">
           <CardHeader>
@@ -121,7 +154,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentTransactions.map((transaction) => (
+              {transactions.map((transaction: any) => (
                 <div key={transaction.id} className="flex items-center justify-between rounded-lg border p-3">
                   <div className="flex items-center gap-3">
                     <div
@@ -129,10 +162,10 @@ export default function DashboardPage() {
                         transaction.type === "Airtime"
                           ? "bg-blue-100 text-blue-600"
                           : transaction.type === "Data"
-                            ? "bg-green-100 text-green-600"
-                            : transaction.type === "Cable TV"
-                              ? "bg-purple-100 text-purple-600"
-                              : "bg-yellow-100 text-yellow-600"
+                          ? "bg-green-100 text-green-600"
+                          : transaction.type === "Cable TV"
+                          ? "bg-purple-100 text-purple-600"
+                          : "bg-yellow-100 text-yellow-600"
                       }`}
                     >
                       {transaction.type === "Airtime" && <Phone className="h-5 w-5" />}
@@ -148,21 +181,17 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-medium">{transaction.amount}</div>
+                    <div className="font-medium">₦{transaction.amount.toLocaleString()}</div>
                     <div
                       className={`text-sm ${
                         transaction.status === "success"
                           ? "text-green-600"
                           : transaction.status === "pending"
-                            ? "text-yellow-600"
-                            : "text-red-600"
+                          ? "text-yellow-600"
+                          : "text-red-600"
                       }`}
                     >
-                      {transaction.status === "success"
-                        ? "Successful"
-                        : transaction.status === "pending"
-                          ? "Pending"
-                          : "Failed"}
+                      {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
                     </div>
                   </div>
                 </div>
@@ -177,6 +206,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
+        {/* Usage Stats */}
         <Card className="md:col-span-3">
           <CardHeader>
             <CardTitle>Usage Statistics</CardTitle>
@@ -189,57 +219,30 @@ export default function DashboardPage() {
                 <TabsTrigger value="monthly">Monthly</TabsTrigger>
                 <TabsTrigger value="yearly">Yearly</TabsTrigger>
               </TabsList>
-              <TabsContent value="weekly" className="space-y-4">
-                <div className="h-[200px] w-full rounded-md border p-4">
-                  <div className="flex h-full items-center justify-center">
-                    <BarChart3 className="h-16 w-16 text-muted-foreground" />
+
+              {["weekly", "monthly", "yearly"].map((period) => (
+                <TabsContent value={period} key={period} className="space-y-4">
+                  <div className="h-[200px] w-full rounded-md border p-4">
+                    <div className="flex h-full items-center justify-center">
+                      <BarChart3 className="h-16 w-16 text-muted-foreground" />
+                    </div>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-md border p-3">
-                    <div className="text-sm text-muted-foreground">Airtime</div>
-                    <div className="text-lg font-bold">₦5,200</div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="rounded-md border p-3">
+                      <div className="text-sm text-muted-foreground">Airtime</div>
+                      <div className="text-lg font-bold">
+                        ₦{usageStats[period].airtime.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="rounded-md border p-3">
+                      <div className="text-sm text-muted-foreground">Data</div>
+                      <div className="text-lg font-bold">
+                        ₦{usageStats[period].data.toLocaleString()}
+                      </div>
+                    </div>
                   </div>
-                  <div className="rounded-md border p-3">
-                    <div className="text-sm text-muted-foreground">Data</div>
-                    <div className="text-lg font-bold">₦12,500</div>
-                  </div>
-                </div>
-              </TabsContent>
-              <TabsContent value="monthly" className="space-y-4">
-                <div className="h-[200px] w-full rounded-md border p-4">
-                  <div className="flex h-full items-center justify-center">
-                    <BarChart3 className="h-16 w-16 text-muted-foreground" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-md border p-3">
-                    <div className="text-sm text-muted-foreground">Airtime</div>
-                    <div className="text-lg font-bold">₦22,800</div>
-                  </div>
-                  <div className="rounded-md border p-3">
-                    <div className="text-sm text-muted-foreground">Data</div>
-                    <div className="text-lg font-bold">₦45,000</div>
-                  </div>
-                </div>
-              </TabsContent>
-              <TabsContent value="yearly" className="space-y-4">
-                <div className="h-[200px] w-full rounded-md border p-4">
-                  <div className="flex h-full items-center justify-center">
-                    <BarChart3 className="h-16 w-16 text-muted-foreground" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-md border p-3">
-                    <div className="text-sm text-muted-foreground">Airtime</div>
-                    <div className="text-lg font-bold">₦245,600</div>
-                  </div>
-                  <div className="rounded-md border p-3">
-                    <div className="text-sm text-muted-foreground">Data</div>
-                    <div className="text-lg font-bold">₦520,000</div>
-                  </div>
-                </div>
-              </TabsContent>
+                </TabsContent>
+              ))}
             </Tabs>
           </CardContent>
         </Card>
