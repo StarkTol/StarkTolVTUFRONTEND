@@ -3,13 +3,14 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { AuthProvider } from "@/context/authContext" // ✅ Import your Auth context
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "StarkTol VTU - Automated. Profitable. Powerful.",
   description: "A futuristic, robotic, and fully automated Nigerian VTU platform",
-    developer: 'Tolani'
+  developer: "Tolani",
 }
 
 export default function RootLayout({
@@ -21,7 +22,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {children}
+          <AuthProvider> {/* ✅ Provide global auth context */}
+            {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

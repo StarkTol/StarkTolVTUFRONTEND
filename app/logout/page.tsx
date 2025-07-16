@@ -8,11 +8,17 @@ export default function LogoutPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Simulate logout process
+    // Clear access token from cookie
+    document.cookie = "accessToken=; Max-Age=0; path=/"
+
+    // Clear token and user data from localStorage (if used)
+    localStorage.removeItem("accessToken")
+    localStorage.removeItem("user")
+
+    // Redirect to login page after short delay
     const timer = setTimeout(() => {
-      // In a real application, this would clear authentication tokens, cookies, etc.
       router.push("/login")
-    }, 2000)
+    }, 1500)
 
     return () => clearTimeout(timer)
   }, [router])

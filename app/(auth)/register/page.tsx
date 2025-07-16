@@ -7,10 +7,17 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
-import api from "@/lib/api" // ✅ NEW: Axios instance
+import api from "@/lib/api" // Axios instance with base URL & credentials
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -50,12 +57,14 @@ export default function RegisterPage() {
       const response = await api.post("/auth/register", payload)
 
       if (response.data.success) {
-        router.push("/login") // redirect to login after success
+        router.push("/login") // ✅ redirect after successful registration
       } else {
         setErrorMessage(response.data.message || "Registration failed.")
       }
     } catch (err: any) {
-      setErrorMessage(err?.response?.data?.message || "Something went wrong.")
+      setErrorMessage(
+        err?.response?.data?.message || "Something went wrong. Please try again."
+      )
     } finally {
       setIsLoading(false)
     }
@@ -66,11 +75,11 @@ export default function RegisterPage() {
       <Card className="mx-auto w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-          <CardDescription>Enter your information to create an account</CardDescription>
+          <CardDescription>Enter your information to get started</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
+            {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
 
             <div className="space-y-2">
               <Label htmlFor="full_name">Full Name</Label>
@@ -83,20 +92,22 @@ export default function RegisterPage() {
                 onChange={handleChange}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder="you@example.com"
                 required
                 value={formData.email}
                 onChange={handleChange}
               />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="phone">Phone</Label>
               <Input
                 id="phone"
                 name="phone"
@@ -107,6 +118,7 @@ export default function RegisterPage() {
                 onChange={handleChange}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -126,13 +138,25 @@ export default function RegisterPage() {
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
-                  <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <span className="sr-only">
+                    {showPassword ? "Hide password" : "Show password"}
+                  </span>
                 </Button>
               </div>
             </div>
+
             <div className="flex items-center space-x-2">
-              <Checkbox id="terms" required checked={formData.agreeTerms} onCheckedChange={handleCheckboxChange} />
+              <Checkbox
+                id="terms"
+                required
+                checked={formData.agreeTerms}
+                onCheckedChange={handleCheckboxChange}
+              />
               <Label htmlFor="terms" className="text-sm">
                 I agree to the{" "}
                 <Link href="/terms" className="text-primary hover:underline">
@@ -145,11 +169,13 @@ export default function RegisterPage() {
               </Label>
             </div>
           </CardContent>
+
           <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating account
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating account...
                 </>
               ) : (
                 "Create Account"

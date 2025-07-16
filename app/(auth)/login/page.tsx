@@ -4,8 +4,6 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import axios from "axios"
-
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,11 +17,13 @@ import {
 } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
+import api from "@/lib/api" // ✅ uses your custom axios instance
 
 export default function LoginPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -42,43 +42,29 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setErrorMessage("")
 
     try {
-      const response = await axios.post(
-        "https://backend-066c.onrender.com/api/v1/auth/login",
-        {
-          email: formData.email,
-          password: formData.password,
-        },
-        {
-          headers: { "Content-Type": "application/json" },
-          withCredentials: true,
-        }
-      )
+      const response = await api.post("/auth/login", {
+        email: formData.email,
+        password: formData.password,
+      })
 
       if (response.data.success) {
-        const { access_token, refresh_token, user } = response.data.data
+        const { user } = response.data.data
 
-        // Store in localStorage
-        localStorage.setItem("access_token", access_token)
-        localStorage.setItem("refresh_token", refresh_token)
+        // Store user and rememberMe in localStorage
         localStorage.setItem("user", JSON.stringify(user))
-
-        // Optional: Remember Me flag
         if (formData.rememberMe) {
           localStorage.setItem("remember_me", "true")
         }
 
-        // Redirect
         router.push("/dashboard")
       } else {
-        alert(response.data.message || "Login failed.")
+        setErrorMessage(response.data.message || "Login failed.")
       }
     } catch (error: any) {
-      console.error("Login error:", error)
-      alert(
-        error?.response?.data?.message || "Login failed. Please check your credentials."
-      )
+      setErrorMessage(error?.response?.data?.message || "Login failed. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -95,6 +81,10 @@ export default function LoginPage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            {errorMessage && (
+              <p className="text-sm text-red-500 text-center">{errorMessage}</p>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -107,6 +97,7 @@ export default function LoginPage() {
                 onChange={handleChange}
               />
             </div>
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
@@ -145,6 +136,7 @@ export default function LoginPage() {
                 </Button>
               </div>
             </div>
+
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="remember"
@@ -156,6 +148,7 @@ export default function LoginPage() {
               </Label>
             </div>
           </CardContent>
+
           <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
