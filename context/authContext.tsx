@@ -1,6 +1,7 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect } from "react"
+import React, { createContext, useContext, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 
 interface User {
   id: string
@@ -26,15 +27,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [refreshToken, setRefreshToken] = useState<string | null>(null)
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user")
-    const storedAccessToken = localStorage.getItem("access_token")
-    const storedRefreshToken = localStorage.getItem("refresh_token")
+  const router = useRouter()
 
-    if (storedUser && storedAccessToken) {
-      setUser(JSON.parse(storedUser))
-      setAccessToken(storedAccessToken)
-      setRefreshToken(storedRefreshToken)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedUser = localStorage.getItem("user")
+      const storedAccessToken = localStorage.getItem("access_token")
+      const storedRefreshToken = localStorage.getItem("refresh_token")
+
+      if (storedUser && storedAccessToken) {
+        setUser(JSON.parse(storedUser))
+        setAccessToken(storedAccessToken)
+        setRefreshToken(storedRefreshToken)
+      }
     }
   }, [])
 
@@ -43,9 +48,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setAccessToken(accessToken)
     setRefreshToken(refreshToken)
 
-    localStorage.setItem("user", JSON.stringify(user))
-    localStorage.setItem("access_token", accessToken)
-    localStorage.setItem("refresh_token", refreshToken)
+    if (typeof window !== "undefined") {
+      localStorage.setItem("user", JSON.stringify(user))
+      localStorage.setItem("access_token", accessToken)
+      localStorage.setItem("refresh_token", refreshToken)
+    }
   }
 
   const logout = () => {
@@ -53,9 +60,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setAccessToken(null)
     setRefreshToken(null)
 
-    localStorage.removeItem("user")
-    localStorage.removeItem("access_token")
-    localStorage.removeItem("refresh_token")
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("user")
+      localStorage.removeItem("access_token")
+      localStorage.removeItem("refresh_token")
+    }
+
+    router.push("/login") // Optional: redirect on logout
   }
 
   return (
