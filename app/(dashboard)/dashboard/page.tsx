@@ -18,10 +18,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
+type UsagePeriod = "weekly" | "monthly" | "yearly"
+
+type Transaction = {
+  id: string
+  type: string
+  provider: string
+  amount: number
+  date: string
+  status: "success" | "pending" | "failed"
+}
+
 export default function DashboardPage() {
   const [walletBalance, setWalletBalance] = useState("₦0.00")
-  const [transactions, setTransactions] = useState([])
-  const [usageStats, setUsageStats] = useState({
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [usageStats, setUsageStats] = useState<Record<UsagePeriod, { airtime: number; data: number }>>({
     weekly: { airtime: 0, data: 0 },
     monthly: { airtime: 0, data: 0 },
     yearly: { airtime: 0, data: 0 },
@@ -43,6 +54,8 @@ export default function DashboardPage() {
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem("access_token")
+        if (!token) return
+
         const headers = { Authorization: `Bearer ${token}` }
 
         const [profileRes, transactionsRes, statsRes] = await Promise.all([
@@ -52,7 +65,7 @@ export default function DashboardPage() {
         ])
 
         const profile = profileRes.data
-        setWalletBalance(`₦${profile.wallet_balance.toLocaleString()}`)
+        setWalletBalance(`₦${(profile.wallet_balance || 0).toLocaleString()}`)
         setTotalSpent(profile.total_spent || 0)
         setReferralBonus(profile.referral_bonus || 0)
 
@@ -148,7 +161,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {transactions.map((tx: any) => (
+              {transactions.map((tx) => (
                 <div key={tx.id} className="flex items-center justify-between rounded-lg border p-3">
                   <div className="flex items-center gap-3">
                     <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
@@ -202,16 +215,20 @@ export default function DashboardPage() {
                 <TabsTrigger value="yearly">Yearly</TabsTrigger>
               </TabsList>
 
-              {["weekly", "monthly", "yearly"].map((period) => (
+              {(["weekly", "monthly", "yearly"] as UsagePeriod[]).map((period) => (
                 <TabsContent value={period} key={period} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="rounded-md border p-3">
                       <div className="text-sm text-muted-foreground">Airtime</div>
-                      <div className="text-lg font-bold">₦{usageStats[period].airtime.toLocaleString()}</div>
+                      <div className="text-lg font-bold">
+                        ₦{usageStats[period]?.airtime.toLocaleString()}
+                      </div>
                     </div>
                     <div className="rounded-md border p-3">
                       <div className="text-sm text-muted-foreground">Data</div>
-                      <div className="text-lg font-bold">₦{usageStats[period].data.toLocaleString()}</div>
+                      <div className="text-lg font-bold">
+                        ₦{usageStats[period]?.data.toLocaleString()}
+                      </div>
                     </div>
                   </div>
                 </TabsContent>
