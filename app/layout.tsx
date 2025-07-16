@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "StarkTol VTU - Automated. Profitable. Powerful.",
   description: "A futuristic, robotic, and fully automated Nigerian VTU platform",
-  developer: "Tolani",
+  // developer: "Tolani", // ❌ Remove or move to a <meta> tag manually if needed
 }
 
 export default function RootLayout({
