@@ -16,6 +16,7 @@ interface AuthContextType {
   accessToken: string | null
   refreshToken: string | null
   isAuthenticated: boolean
+  loading: boolean
   login: (user: User, accessToken: string, refreshToken: string) => void
   logout: () => void
 }
@@ -26,47 +27,55 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [refreshToken, setRefreshToken] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   const router = useRouter()
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedUser = localStorage.getItem("user")
-      const storedAccessToken = localStorage.getItem("access_token")
-      const storedRefreshToken = localStorage.getItem("refresh_token")
+    const storedUser = localStorage.getItem("user")
+    const storedAccessToken = localStorage.getItem("access_token")
+    const storedRefreshToken = localStorage.getItem("refresh_token")
 
-      if (storedUser && storedAccessToken) {
-        setUser(JSON.parse(storedUser))
-        setAccessToken(storedAccessToken)
-        setRefreshToken(storedRefreshToken)
-      }
+    if (storedUser && storedAccessToken) {
+      console.log("🔁 [AuthContext] Loading user from localStorage")
+      setUser(JSON.parse(storedUser))
+      setAccessToken(storedAccessToken)
+      setRefreshToken(storedRefreshToken)
     }
+
+    // Let state update before marking loading as false
+    setTimeout(() => {
+      console.log("✅ [AuthContext] Finished loading auth state")
+      setLoading(false)
+    }, 0)
   }, [])
 
   const login = (user: User, accessToken: string, refreshToken: string) => {
+    console.log("⚡ [AuthContext] Logging in with:", user)
+
     setUser(user)
     setAccessToken(accessToken)
     setRefreshToken(refreshToken)
 
-    if (typeof window !== "undefined") {
-      localStorage.setItem("user", JSON.stringify(user))
-      localStorage.setItem("access_token", accessToken)
-      localStorage.setItem("refresh_token", refreshToken)
-    }
+    localStorage.setItem("user", JSON.stringify(user))
+    localStorage.setItem("access_token", accessToken)
+    localStorage.setItem("refresh_token", refreshToken)
+
+    console.log("✅ [AuthContext] Login complete. user:", user)
   }
 
   const logout = () => {
+    console.log("🚪 [AuthContext] Logging out")
+
     setUser(null)
     setAccessToken(null)
     setRefreshToken(null)
 
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("user")
-      localStorage.removeItem("access_token")
-      localStorage.removeItem("refresh_token")
-    }
+    localStorage.removeItem("user")
+    localStorage.removeItem("access_token")
+    localStorage.removeItem("refresh_token")
 
-    router.push("/login") // Optional: redirect on logout
+    router.push("/login")
   }
 
   return (
@@ -78,6 +87,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isAuthenticated: !!user && !!accessToken,
         login,
         logout,
+        loading,
       }}
     >
       {children}
@@ -87,7 +97,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext)
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useAuth must be used within an AuthProvider")
   }
   return context

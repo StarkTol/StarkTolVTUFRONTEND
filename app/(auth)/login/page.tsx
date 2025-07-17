@@ -1,10 +1,9 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/context/authContext" // ✅ ADDED
+import { useAuth } from "@/context/authContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,15 +21,25 @@ import api from "@/lib/api"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login } = useAuth() // ✅ ADDED
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
+  const { login, user, loading } = useAuth()
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     rememberMe: false,
   })
+
+  const [showPassword, setShowPassword] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+
+  // ✅ Redirect if already logged in
+  useEffect(() => {
+    console.log("👀 Watching auth context:", { user, loading })
+    if (!loading && user) {
+      router.replace("/dashboard")
+    }
+  }, [user, loading, router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -52,23 +61,41 @@ export default function LoginPage() {
         password: formData.password,
       })
 
-      if (response.data.success) {
-        const { user, accessToken, refreshToken } = response.data.data
+      console.log("✅ Login API response:", response?.data)
 
-        // ✅ Proper auth login
-        login(user, accessToken, refreshToken)
-
-        // Optional: store rememberMe flag
-        if (formData.rememberMe) {
-          localStorage.setItem("remember_me", "true")
-        }
-
-        router.push("/dashboard")
-      } else {
-        setErrorMessage(response.data.message || "Login failed.")
+      const resData = response?.data
+      if (!resData || !resData.success || !resData.data) {
+        throw new Error(resData?.message || "Unexpected response structure")
       }
-    } catch (error: any) {
-      setErrorMessage(error?.response?.data?.message || "Login failed. Please try again.")
+
+      const { user, accessToken, refreshToken } = resData.data
+
+      console.log("👤 User:", user)
+      console.log("🎟️ AccessToken:", accessToken)
+
+      // Save in auth context
+      login(user, accessToken, refreshToken)
+
+      // Remember user
+      if (formData.rememberMe) {
+        localStorage.setItem("remember_me", "true")
+      }
+
+      // ✅ More reliable redirect with full reload
+      setTimeout(() => {
+        window.location.href = "/dashboard"
+      }, 300)
+    } catch (err: any) {
+      console.error("❌ Login error:", err)
+
+      let message = "Login failed. Try again."
+      if (err?.response?.data?.message) {
+        message = err.response.data.message
+      } else if (err?.message) {
+        message = err.message
+      }
+
+      setErrorMessage(message)
     } finally {
       setIsLoading(false)
     }
@@ -79,14 +106,12 @@ export default function LoginPage() {
       <Card className="mx-auto w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-          <CardDescription>
-            Enter your credentials to access your account
-          </CardDescription>
+          <CardDescription>Enter your credentials to access your account</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             {errorMessage && (
-              <p className="text-sm text-red-500 text-center">{errorMessage}</p>
+              <div className="text-sm text-red-500 text-center">{errorMessage}</div>
             )}
 
             <div className="space-y-2">
@@ -105,10 +130,7 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link
-                  href="/forgot-password"
-                  className="text-xs text-primary hover:underline"
-                >
+                <Link href="/forgot-password" className="text-xs text-primary hover:underline">
                   Forgot password?
                 </Link>
               </div>
