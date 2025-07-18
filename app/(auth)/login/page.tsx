@@ -33,10 +33,10 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
-  // ✅ Redirect if already logged in
+  // ✅ Watch auth context to redirect
   useEffect(() => {
-    console.log("👀 Watching auth context:", { user, loading })
     if (!loading && user) {
+      console.log("✅ Auth state loaded, redirecting to /dashboard")
       router.replace("/dashboard")
     }
   }, [user, loading, router])
@@ -73,18 +73,15 @@ export default function LoginPage() {
       console.log("👤 User:", user)
       console.log("🎟️ AccessToken:", accessToken)
 
-      // Save in auth context
+      // Save in context
       login(user, accessToken, refreshToken)
 
-      // Remember user
+      // Optional: Save remember_me
       if (formData.rememberMe) {
         localStorage.setItem("remember_me", "true")
       }
 
-      // ✅ More reliable redirect with full reload
-      setTimeout(() => {
-        window.location.href = "/dashboard"
-      }, 300)
+      // ✅ Let the `useEffect` handle redirect after context updates
     } catch (err: any) {
       console.error("❌ Login error:", err)
 
