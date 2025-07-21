@@ -4,6 +4,7 @@ import "./globals.css"
 
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/context/authContext"
+import { UserDataProvider } from "@/context/UserDataContext"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -23,7 +24,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>
-            {children}
+            <UserDataProvider>
+              {children}
+            </UserDataProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

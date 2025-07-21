@@ -35,6 +35,10 @@ export default function RegisterPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+    // Clear error message when user starts typing
+    if (errorMessage) {
+      setErrorMessage("")
+    }
   }
 
   const handleCheckboxChange = (checked: boolean) => {
@@ -46,25 +50,120 @@ export default function RegisterPage() {
     setErrorMessage("")
     setIsLoading(true)
 
+    // Validate form data
+    if (!formData.full_name.trim()) {
+      setErrorMessage("Full name is required")
+      setIsLoading(false)
+      return
+    }
+    
+    if (!formData.email.trim()) {
+      setErrorMessage("Email is required")
+      setIsLoading(false)
+      return
+    }
+    
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email.trim())) {
+      setErrorMessage("Please enter a valid email address")
+      setIsLoading(false)
+      return
+    }
+    
+    if (!formData.phone.trim()) {
+      setErrorMessage("Phone number is required")
+      setIsLoading(false)
+      return
+    }
+    
+    // Phone number validation (basic Nigerian number format)
+    const phoneRegex = /^(\+234|0)[789][01]\d{8}$/
+    if (!phoneRegex.test(formData.phone.trim().replace(/\s/g, ''))) {
+      setErrorMessage("Please enter a valid Nigerian phone number (e.g., 08012345678 or +2348012345678)")
+      setIsLoading(false)
+      return
+    }
+    
+    if (formData.password.length < 6) {
+      setErrorMessage("Password must be at least 6 characters")
+      setIsLoading(false)
+      return
+    }
+    
+    if (!formData.agreeTerms) {
+      setErrorMessage("You must agree to the terms and conditions")
+      setIsLoading(false)
+      return
+    }
+
     try {
       const payload = {
-        full_name: formData.full_name,
-        email: formData.email,
-        phone: formData.phone,
+        full_name: formData.full_name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        phone: formData.phone.trim(),
         password: formData.password,
       }
 
+      console.log("🚀 [Register] Submitting registration:", {
+        ...payload,
+        password: "[HIDDEN]"
+      })
+
       const response = await api.post("/auth/register", payload)
 
+      console.log("✅ [Register] Registration response:", response.data)
+
       if (response.data.success) {
-        router.push("/login") // ✅ redirect after successful registration
+        console.log("🎉 [Register] Registration successful, redirecting to login")
+        router.push("/login")
       } else {
+        console.error("❌ [Register] Registration failed:", response.data.message)
         setErrorMessage(response.data.message || "Registration failed.")
       }
     } catch (err: any) {
-      setErrorMessage(
-        err?.response?.data?.message || "Something went wrong. Please try again."
-      )
+      console.error("❌ [Register] Registration error:", err)
+      console.error("❌ [Register] Error details:", {
+        message: err.message,
+        response: err.response,
+        config: err.config,
+        code: err.code
+      })
+
+      let errorMessage = "Something went wrong. Please try again."
+      
+      if (err.response) {
+        // Server responded with error status
+        console.log("❌ [Register] Server response data:", err.response.data)
+        
+        // Try to extract the error message from server response
+        if (err.response.data?.message) {
+          errorMessage = err.response.data.message
+        } else if (err.response.data?.error) {
+          errorMessage = err.response.data.error
+        } else if (err.response.status === 400) {
+          errorMessage = "Invalid registration data. Please check your inputs."
+        } else if (err.response.status === 409) {
+          errorMessage = "A user with this email already exists. Please use a different email."
+        } else if (err.response.status === 422) {
+          errorMessage = "Invalid data format. Please check your inputs."
+        } else if (err.response.status >= 500) {
+          errorMessage = "Server error. Please try again later."
+        } else {
+          errorMessage = `Server error (${err.response.status}): ${err.response.statusText}`
+        }
+      } else if (err.request) {
+        // Network error - request was made but no response received
+        errorMessage = "Network error. Please check your internet connection and try again."
+      } else if (err.code === 'ECONNREFUSED') {
+        errorMessage = "Unable to connect to server. Please try again later."
+      } else if (err.code === 'ERR_NETWORK') {
+        errorMessage = "Network error. Please check your connection."
+      } else {
+        errorMessage = err.message || "An unexpected error occurred."
+      }
+      
+      setErrorMessage(errorMessage)
     } finally {
       setIsLoading(false)
     }

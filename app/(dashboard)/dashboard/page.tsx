@@ -1,7 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import axios from "axios"
 import Link from "next/link"
 import {
   BarChart3,
@@ -17,6 +15,8 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useUserData } from "@/context/UserDataContext"
+import AuthDebug from "@/components/auth/AuthDebug"
 
 type UsagePeriod = "weekly" | "monthly" | "yearly"
 
@@ -30,16 +30,8 @@ type Transaction = {
 }
 
 export default function DashboardPage() {
-  const [walletBalance, setWalletBalance] = useState("₦0.00")
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [usageStats, setUsageStats] = useState<Record<UsagePeriod, { airtime: number; data: number }>>({
-    weekly: { airtime: 0, data: 0 },
-    monthly: { airtime: 0, data: 0 },
-    yearly: { airtime: 0, data: 0 },
-  })
-  const [totalSpent, setTotalSpent] = useState(0)
-  const [referralBonus, setReferralBonus] = useState(0)
-  const [loading, setLoading] = useState(true)
+  // Use the secure UserDataContext instead of direct API calls
+  const { profile, transactions, usageStats, loading, error } = useUserData()
 
   const quickServices = [
     { id: 1, name: "Airtime", icon: Phone, color: "bg-blue-500", path: "/dashboard/airtime" },
@@ -50,47 +42,68 @@ export default function DashboardPage() {
     { id: 6, name: "Recharge Card", icon: CreditCard, color: "bg-indigo-500", path: "/dashboard/recharge-card" },
   ]
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const token = localStorage.getItem("access_token")
-        if (!token) {
-          console.warn("Access token not found.")
-          return
-        }
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-sm text-muted-foreground">Loading your dashboard...</p>
+        </div>
+      </div>
+    )
+  }
 
-        const headers = {
-          Authorization: `Bearer ${token}`
-        }
+  // Show error state with debug info
+  if (error) {
+    return (
+      <div className="space-y-8">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        </div>
+        
+        <div className="flex min-h-[400px] items-center justify-center">
+          <div className="text-center space-y-4">
+            <p className="text-lg font-semibold text-red-600">Failed to load dashboard data</p>
+            <p className="text-sm text-muted-foreground">{error}</p>
+            <p className="text-xs text-muted-foreground">Check browser console for more details</p>
+            
+            {/* Show basic dashboard with mock data for now */}
+            <div className="mt-8">
+              <p className="text-sm text-orange-600 mb-4">Showing fallback dashboard (API connection issues)</p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Debug Information */}
+        <AuthDebug />
+        
+        {/* Show quick services even if API fails */}
+        <div>
+          <h2 className="mb-4 text-xl font-semibold">Quick Services</h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {quickServices.map((service) => (
+              <Link key={service.id} href={service.path}>
+                <Card className="h-full cursor-pointer hover:border-primary hover:shadow-md transition-all">
+                  <CardContent className="flex flex-col items-center justify-center p-4">
+                    <div className={`mb-3 flex h-12 w-12 items-center justify-center rounded-full ${service.color}`}>
+                      <service.icon className="h-6 w-6 text-white" />
+                    </div>
+                    <span className="text-center font-medium">{service.name}</span>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-        const [profileRes, transactionsRes, statsRes] = await Promise.all([
-          axios.get("https://backend-066c.onrender.com/api/v1/user/profile", { headers }),
-          axios.get("https://backend-066c.onrender.com/api/v1/transactions?limit=5", { headers }),
-          axios.get("https://backend-066c.onrender.com/api/v1/stats/usage", { headers })
-        ])
-
-        const profile = profileRes.data?.data || {}
-        const transactionsList = transactionsRes.data?.transactions || []
-        const stats = statsRes.data?.data || {}
-
-        setWalletBalance(`₦${(profile.wallet_balance || 0).toLocaleString()}`)
-        setTotalSpent(profile.total_spent || 0)
-        setReferralBonus(profile.referral_bonus || 0)
-        setTransactions(transactionsList)
-        setUsageStats({
-          weekly: stats.weekly || { airtime: 0, data: 0 },
-          monthly: stats.monthly || { airtime: 0, data: 0 },
-          yearly: stats.yearly || { airtime: 0, data: 0 },
-        })
-      } catch (error) {
-        console.error("Dashboard loading error:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchDashboardData()
-  }, [])
+  // Calculate display values from secure user data
+  const walletBalance = `₦${(profile?.wallet_balance || 0).toLocaleString()}`
+  const totalSpent = profile?.total_spent || 0
+  const referralBonus = profile?.referral_bonus || 0
 
   return (
     <div className="space-y-8">

@@ -2,30 +2,58 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Building, CreditCard, Smartphone, Copy, CheckCircle2, Loader2 } from "lucide-react"
+import { Building, CreditCard, Smartphone, Copy, CheckCircle2, Loader2, AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { walletService } from "@/lib/services/walletService"
+import { useUserData } from "@/context/UserDataContext"
 
 export default function WalletFundPage() {
   const router = useRouter()
+  const { userData, updateWalletBalance } = useUserData()
   const [isCopied, setIsCopied] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isDataLoading, setIsDataLoading] = useState(true)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [fundMethod, setFundMethod] = useState("bank")
   const [fundAmount, setFundAmount] = useState("")
+  const [transactionReference, setTransactionReference] = useState<string | null>(null)
 
-  // Mock wallet data
-  const walletData = {
-    balance: "₦125,000.00",
-    accountNumber: "1234567890",
-    accountName: "John Doe",
+  // Wallet data from API
+  const [walletData, setWalletData] = useState({
+    balance: "₦0.00",
+    accountNumber: "",
+    accountName: "",
     bankName: "Babs VTU Bank",
-  }
+  })
+
+  // Load wallet balance on component mount
+  useEffect(() => {
+    const loadWalletBalance = async () => {
+      try {
+        const balance = await walletService.getBalance()
+        setWalletData(prev => ({
+          ...prev,
+          balance: `₦${balance.toLocaleString()}.00`,
+          accountNumber: userData?.accountNumber || "1234567890", // Fallback for demo
+          accountName: userData?.name || "User",
+        }))
+      } catch (err) {
+        console.error('Failed to load wallet balance:', err)
+        setError('Failed to load wallet information')
+      } finally {
+        setIsDataLoading(false)
+      }
+    }
+
+    loadWalletBalance()
+  }, [userData])
 
   const handleCopyAccountNumber = () => {
     navigator.clipboard.writeText(walletData.accountNumber)
@@ -33,22 +61,67 @@ export default function WalletFundPage() {
     setTimeout(() => setIsCopied(false), 2000)
   }
 
-  const handleFundWallet = (e: React.FormEvent) => {
+  const handleFundWallet = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError(null)
 
-    // Simulate processing
-    setTimeout(() => {
-      setIsLoading(false)
+    try {
+      const amount = parseFloat(fundAmount)
+      if (amount < 100) {
+        throw new Error('Minimum funding amount is ₦100')
+      }
+
+      const response = await walletService.fundWallet({
+        amount,
+        method: fundMethod as 'bank' | 'card' | 'ussd',
+        metadata: getFundingMetadata()
+      })
+
+      setTransactionReference(response.reference)
       setIsSuccess(true)
+      
+      // Update global wallet balance
+      const newBalance = await walletService.getBalance()
+      updateWalletBalance(newBalance)
 
-      // Reset after 3 seconds and redirect
+      // Reset form after success display
       setTimeout(() => {
         setIsSuccess(false)
         setFundAmount("")
         router.push("/dashboard/wallet")
       }, 3000)
-    }, 1500)
+
+    } catch (err: any) {
+      setError(err.message || 'Failed to fund wallet')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getFundingMetadata = () => {
+    const form = document.querySelector('form')
+    if (!form) return {}
+
+    const formData = new FormData(form)
+    
+    if (fundMethod === 'card') {
+      return {
+        cardNumber: formData.get('cardNumber') as string,
+        expiryDate: formData.get('expiryDate') as string,
+        cvv: formData.get('cvv') as string,
+        cardName: formData.get('cardName') as string,
+      }
+    }
+    
+    if (fundMethod === 'ussd') {
+      return {
+        phoneNumber: formData.get('phoneNumber') as string,
+        bankName: formData.get('bankName') as string,
+      }
+    }
+    
+    return {}
   }
 
   return (
@@ -73,9 +146,11 @@ export default function WalletFundPage() {
               </div>
               <h3 className="mb-2 text-2xl font-bold">Wallet Funded!</h3>
               <p className="mb-2 text-muted-foreground">Your wallet has been successfully funded with ₦{fundAmount}.</p>
-              <p className="text-sm text-muted-foreground">
-                Transaction Reference: BVTU{Math.floor(Math.random() * 1000000000)}
-              </p>
+              {transactionReference && (
+                <p className="text-sm text-muted-foreground">
+                  Transaction Reference: {transactionReference}
+                </p>
+              )}
             </div>
           ) : (
             <form onSubmit={handleFundWallet} className="space-y-6">

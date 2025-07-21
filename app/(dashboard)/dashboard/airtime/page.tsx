@@ -2,69 +2,67 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ProviderSelector } from "@/components/dashboard/provider-selector"
-import { Loader2, CheckCircle2, Phone } from "lucide-react"
+import { Loader2, CheckCircle2, Phone, AlertCircle } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { airtimeService, type Provider, type RecentTransaction } from "@/lib/services/airtimeService"
+import { useUserData } from "@/context/UserDataContext"
 
 export default function AirtimePage() {
+  const { profile, refreshUserData } = useUserData()
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [error, setError] = useState<string>('')
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null)
+  const [providers, setProviders] = useState<Provider[]>([])
+  const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([])
+  const [loadingProviders, setLoadingProviders] = useState(true)
+  const [transactionResult, setTransactionResult] = useState<any>(null)
   const [formData, setFormData] = useState({
     phoneNumber: "",
     amount: "",
     paymentMethod: "wallet",
   })
 
-  // Mock data for recent transactions
-  const recentTransactions = [
-    {
-      id: 1,
-      provider: "MTN",
-      phoneNumber: "08012345678",
-      amount: "₦1,000",
-      date: "Today, 10:30 AM",
-      status: "success",
-    },
-    {
-      id: 2,
-      provider: "Airtel",
-      phoneNumber: "09087654321",
-      amount: "₦500",
-      date: "Yesterday, 3:15 PM",
-      status: "success",
-    },
-    {
-      id: 3,
-      provider: "Glo",
-      phoneNumber: "08034567890",
-      amount: "₦200",
-      date: "23/04/2023, 9:00 AM",
-      status: "failed",
-    },
-    {
-      id: 4,
-      provider: "9mobile",
-      phoneNumber: "09076543210",
-      amount: "₦1,500",
-      date: "20/04/2023, 11:45 AM",
-      status: "success",
-    },
-  ]
+  // Load providers and recent transactions on component mount
+  useEffect(() => {
+    loadProviders()
+    loadRecentTransactions()
+  }, [])
 
-  // Mock data for providers
-  const providers = [
-    { id: "mtn", name: "MTN", logo: "/mtn.logo.jpg?height=60&width=60" },
-    { id: "airtel", name: "Airtel", logo: "/airtel.logo.jpg?height=60&width=60" },
-    { id: "glo", name: "Glo", logo: "/glo.logo.jpg?height=60&width=60" },
-    { id: "9mobile", name: "9mobile", logo: "/etisalate.logo.jpg?height=60&width=60" },
-  ]
+  const loadProviders = async () => {
+    try {
+      setLoadingProviders(true)
+      const providersData = await airtimeService.getProviders()
+      setProviders(providersData)
+    } catch (error) {
+      console.error('Failed to load providers:', error)
+      // Fallback to default providers if API fails
+      setProviders([
+        { id: "mtn", name: "MTN", logo: "/mtn.logo.jpg?height=60&width=60", status: 'active' },
+        { id: "airtel", name: "Airtel", logo: "/airtel.logo.jpg?height=60&width=60", status: 'active' },
+        { id: "glo", name: "Glo", logo: "/glo.logo.jpg?height=60&width=60", status: 'active' },
+        { id: "9mobile", name: "9mobile", logo: "/etisalate.logo.jpg?height=60&width=60", status: 'active' },
+      ])
+    } finally {
+      setLoadingProviders(false)
+    }
+  }
+
+  const loadRecentTransactions = async () => {
+    try {
+      const transactions = await airtimeService.getRecentTransactions(5)
+      setRecentTransactions(transactions)
+    } catch (error) {
+      console.error('Failed to load recent transactions:', error)
+    }
+  }
 
   const handleProviderSelect = (providerId: string) => {
     setSelectedProvider(providerId)
@@ -79,26 +77,51 @@ export default function AirtimePage() {
     setFormData((prev) => ({ ...prev, paymentMethod: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!selectedProvider) return
+
     setIsLoading(true)
+    setError('')
 
-    // Simulate transaction processing
-    setTimeout(() => {
+    try {
+      const result = await airtimeService.purchaseAirtime({
+        provider: selectedProvider,
+        phoneNumber: formData.phoneNumber,
+        amount: Number(formData.amount),
+        paymentMethod: formData.paymentMethod as 'wallet' | 'card'
+      })
+
+      if (result.success) {
+        setTransactionResult(result.data)
+        setIsSuccess(true)
+        
+        // Refresh user data to update wallet balance
+        await refreshUserData()
+        
+        // Reload recent transactions
+        await loadRecentTransactions()
+
+        // Reset form after 5 seconds
+        setTimeout(() => {
+          setIsSuccess(false)
+          setTransactionResult(null)
+          setSelectedProvider(null)
+          setFormData({
+            phoneNumber: "",
+            amount: "",
+            paymentMethod: "wallet",
+          })
+        }, 5000)
+      } else {
+        setError(result.message)
+      }
+    } catch (error: any) {
+      console.error('Airtime purchase failed:', error)
+      setError('Failed to purchase airtime. Please try again.')
+    } finally {
       setIsLoading(false)
-      setIsSuccess(true)
-
-      // Reset form after 3 seconds
-      setTimeout(() => {
-        setIsSuccess(false)
-        setSelectedProvider(null)
-        setFormData({
-          phoneNumber: "",
-          amount: "",
-          paymentMethod: "wallet",
-        })
-      }, 3000)
-    }, 1500)
+    }
   }
 
   return (
@@ -115,6 +138,13 @@ export default function AirtimePage() {
               <CardDescription>Buy airtime for any network in Nigeria</CardDescription>
             </CardHeader>
             <CardContent>
+              {error && (
+                <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-red-700">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="text-sm">{error}</span>
+                </div>
+              )}
+              
               {isSuccess ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
                   <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
@@ -125,8 +155,13 @@ export default function AirtimePage() {
                     You have successfully purchased ₦{formData.amount} airtime for {formData.phoneNumber}.
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Transaction Reference: BVTU{Math.floor(Math.random() * 1000000000)}
+                    Transaction Reference: {transactionResult?.reference || `BVTU${Math.floor(Math.random() * 1000000000)}`}
                   </p>
+                  {transactionResult?.status === 'pending' && (
+                    <p className="mt-2 text-sm text-orange-600">
+                      Transaction is being processed. You'll receive a confirmation shortly.
+                    </p>
+                  )}
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -177,7 +212,7 @@ export default function AirtimePage() {
                         <div className="flex items-center space-x-2 rounded-md border p-3">
                           <RadioGroupItem value="wallet" id="wallet" />
                           <Label htmlFor="wallet" className="flex-1 cursor-pointer font-normal">
-                            Wallet Balance (₦125,000.00)
+                            Wallet Balance ({profile ? `₦${profile.wallet_balance.toLocaleString()}` : '₦0.00'})
                           </Label>
                         </div>
                       </RadioGroup>
@@ -206,6 +241,12 @@ export default function AirtimePage() {
               <CardDescription>Your recent airtime purchases</CardDescription>
             </CardHeader>
             <CardContent>
+              {loadingProviders ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span className="ml-2 text-sm text-muted-foreground">Loading recent transactions...</span>
+                </div>
+              ) : (
               <div className="space-y-4">
                 {recentTransactions.map((transaction) => (
                   <div key={transaction.id} className="flex items-center justify-between rounded-lg border p-3">
@@ -229,6 +270,7 @@ export default function AirtimePage() {
                   </div>
                 ))}
               </div>
+              )}
             </CardContent>
             <CardFooter>
               <Button variant="outline" size="sm" className="w-full">

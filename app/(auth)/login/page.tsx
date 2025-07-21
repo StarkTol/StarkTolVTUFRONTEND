@@ -36,8 +36,16 @@ export default function LoginPage() {
   // ✅ Watch auth context to redirect
   useEffect(() => {
     if (!loading && user) {
-      console.log("✅ Auth state loaded, redirecting to /dashboard")
-      router.replace("/dashboard")
+      // Check if there's a stored redirect URL
+      const redirectUrl = sessionStorage.getItem('redirectUrl')
+      const destination = redirectUrl && redirectUrl !== '/login' ? redirectUrl : '/dashboard'
+      
+      console.log("✅ Auth state loaded, redirecting to:", destination)
+      
+      // Clear the stored URL
+      sessionStorage.removeItem('redirectUrl')
+      
+      router.replace(destination)
     }
   }, [user, loading, router])
 
