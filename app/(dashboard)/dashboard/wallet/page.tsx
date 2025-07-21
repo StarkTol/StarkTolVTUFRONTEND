@@ -4,70 +4,24 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Wallet, ArrowUpRight, ArrowDownLeft, Copy, CheckCircle2, CreditCard, Clock, BarChart3 } from "lucide-react"
+import { Wallet, ArrowUpRight, ArrowDownLeft, Copy, CheckCircle2, CreditCard, Clock, BarChart3, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import useWallet from "@/hooks/useWallet"
 
 export default function WalletPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("overview")
   const [isCopied, setIsCopied] = useState(false)
-
-  // Mock wallet data
-  const walletData = {
-    balance: "₦125,000.00",
-    accountNumber: "1234567890",
-    accountName: "John Doe",
-    bankName: "Babs VTU Bank",
-  }
-
-  // Mock transaction data
-  const transactions = [
-    {
-      id: 1,
-      type: "credit",
-      description: "Wallet Funding",
-      amount: "₦50,000",
-      date: "Today, 10:30 AM",
-      status: "success",
-    },
-    {
-      id: 2,
-      type: "debit",
-      description: "MTN Airtime Purchase",
-      amount: "₦1,000",
-      date: "Yesterday, 3:15 PM",
-      status: "success",
-    },
-    {
-      id: 3,
-      type: "debit",
-      description: "DSTV Subscription",
-      amount: "₦24,500",
-      date: "23/04/2023, 9:00 AM",
-      status: "success",
-    },
-    {
-      id: 4,
-      type: "credit",
-      description: "Referral Bonus",
-      amount: "₦5,000",
-      date: "20/04/2023, 11:45 AM",
-      status: "success",
-    },
-    {
-      id: 5,
-      type: "debit",
-      description: "Wallet Transfer",
-      amount: "₦10,000",
-      date: "18/04/2023, 2:30 PM",
-      status: "success",
-    },
-  ]
+  
+  // Fetch wallet data using the hook
+  const { walletData, transactions, loading, error, refetch } = useWallet()
 
   const handleCopyAccountNumber = () => {
-    navigator.clipboard.writeText(walletData.accountNumber)
-    setIsCopied(true)
-    setTimeout(() => setIsCopied(false), 2000)
+    if (walletData?.accountNumber) {
+      navigator.clipboard.writeText(walletData.accountNumber)
+      setIsCopied(true)
+      setTimeout(() => setIsCopied(false), 2000)
+    }
   }
 
   const navigateToFundWallet = () => {
@@ -80,6 +34,54 @@ export default function WalletPage() {
 
   const navigateToTransactions = () => {
     router.push("/dashboard/wallet/transactions")
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">Wallet</h1>
+        </div>
+        <div className="grid gap-8 md:grid-cols-3">
+          <Card className="md:col-span-2">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-center h-40">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-center h-40">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">Wallet</h1>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <p className="text-destructive mb-4">Error loading wallet data: {error}</p>
+              <Button onClick={refetch} variant="outline">
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -98,7 +100,7 @@ export default function WalletPage() {
             <div className="mb-6 flex items-center justify-between rounded-lg bg-gradient-to-r from-primary to-purple-600 p-6 text-white">
               <div>
                 <p className="text-sm font-medium opacity-90">Available Balance</p>
-                <p className="text-3xl font-bold">{walletData.balance}</p>
+                <p className="text-3xl font-bold">{walletData?.formatted || '₦0.00'}</p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
                 <Wallet className="h-6 w-6" />
@@ -111,7 +113,7 @@ export default function WalletPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Account Number</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{walletData.accountNumber}</span>
+                    <span className="font-medium">{walletData?.accountNumber || 'Loading...'}</span>
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopyAccountNumber}>
                       {isCopied ? <CheckCircle2 className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                       <span className="sr-only">Copy account number</span>
@@ -120,11 +122,11 @@ export default function WalletPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Account Name</span>
-                  <span className="font-medium">{walletData.accountName}</span>
+                  <span className="font-medium">{walletData?.accountName || 'Loading...'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Bank Name</span>
-                  <span className="font-medium">{walletData.bankName}</span>
+                  <span className="font-medium">{walletData?.bankName || 'Loading...'}</span>
                 </div>
               </div>
             </div>
