@@ -341,7 +341,7 @@ export default function DataPage() {
                   <div className="text-center py-8 text-muted-foreground">
                     No recent data transactions found
                   </div>
-                ))}
+                )}
               </div>
               )}
             </CardContent>

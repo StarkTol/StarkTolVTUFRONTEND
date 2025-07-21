@@ -1,22 +1,20 @@
 "use client"
 
 import Link from "next/link"
+import { useState, useEffect } from "react"
 import {
-  BarChart3,
   Wallet,
-  ArrowUpRight,
   Phone,
   Wifi,
   Tv,
   Zap,
   CreditCard,
   ArrowRight,
+  AlertCircle,
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useUserData } from "@/context/UserDataContext"
-import AuthDebug from "@/components/auth/AuthDebug"
 
 type UsagePeriod = "weekly" | "monthly" | "yearly"
 
@@ -30,9 +28,10 @@ type Transaction = {
 }
 
 export default function DashboardPage() {
-  // Use the secure UserDataContext instead of direct API calls
-  const { profile, transactions, usageStats, loading, error } = useUserData()
-
+  const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState<any>(null)
+  const [transactions, setTransactions] = useState<any[]>([])
+  
   const quickServices = [
     { id: 1, name: "Airtime", icon: Phone, color: "bg-blue-500", path: "/dashboard/airtime" },
     { id: 2, name: "Data", icon: Wifi, color: "bg-green-500", path: "/dashboard/data" },
@@ -41,6 +40,46 @@ export default function DashboardPage() {
     { id: 5, name: "Fund Wallet", icon: Wallet, color: "bg-red-500", path: "/dashboard/wallet" },
     { id: 6, name: "Recharge Card", icon: CreditCard, color: "bg-indigo-500", path: "/dashboard/recharge-card" },
   ]
+  
+  useEffect(() => {
+    // Simulate loading and set some mock data
+    const timer = setTimeout(() => {
+      setProfile({
+        wallet_balance: 25000,
+        total_spent: 12500,
+        referral_bonus: 2000
+      })
+      setTransactions([
+        {
+          id: '1',
+          type: 'Airtime',
+          provider: 'MTN',
+          amount: 500,
+          date: 'Today 2:30 PM',
+          status: 'success'
+        },
+        {
+          id: '2',
+          type: 'Data',
+          provider: 'Airtel',
+          amount: 1000,
+          date: 'Yesterday 4:15 PM',
+          status: 'success'
+        },
+        {
+          id: '3',
+          type: 'Cable TV',
+          provider: 'DSTV',
+          amount: 4000,
+          date: '2 days ago',
+          status: 'pending'
+        }
+      ])
+      setLoading(false)
+    }, 1500)
+    
+    return () => clearTimeout(timer)
+  }, [])
 
   // Show loading state
   if (loading) {
@@ -54,51 +93,6 @@ export default function DashboardPage() {
     )
   }
 
-  // Show error state with debug info
-  if (error) {
-    return (
-      <div className="space-y-8">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        </div>
-        
-        <div className="flex min-h-[400px] items-center justify-center">
-          <div className="text-center space-y-4">
-            <p className="text-lg font-semibold text-red-600">Failed to load dashboard data</p>
-            <p className="text-sm text-muted-foreground">{error}</p>
-            <p className="text-xs text-muted-foreground">Check browser console for more details</p>
-            
-            {/* Show basic dashboard with mock data for now */}
-            <div className="mt-8">
-              <p className="text-sm text-orange-600 mb-4">Showing fallback dashboard (API connection issues)</p>
-            </div>
-          </div>
-        </div>
-        
-        {/* Debug Information */}
-        <AuthDebug />
-        
-        {/* Show quick services even if API fails */}
-        <div>
-          <h2 className="mb-4 text-xl font-semibold">Quick Services</h2>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {quickServices.map((service) => (
-              <Link key={service.id} href={service.path}>
-                <Card className="h-full cursor-pointer hover:border-primary hover:shadow-md transition-all">
-                  <CardContent className="flex flex-col items-center justify-center p-4">
-                    <div className={`mb-3 flex h-12 w-12 items-center justify-center rounded-full ${service.color}`}>
-                      <service.icon className="h-6 w-6 text-white" />
-                    </div>
-                    <span className="text-center font-medium">{service.name}</span>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   // Calculate display values from secure user data
   const walletBalance = `₦${(profile?.wallet_balance || 0).toLocaleString()}`
@@ -239,24 +233,42 @@ export default function DashboardPage() {
                 <TabsTrigger value="yearly">Yearly</TabsTrigger>
               </TabsList>
 
-              {(["weekly", "monthly", "yearly"] as UsagePeriod[]).map((period) => (
-                <TabsContent value={period} key={period} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="rounded-md border p-3">
-                      <div className="text-sm text-muted-foreground">Airtime</div>
-                      <div className="text-lg font-bold">
-                        ₦{usageStats[period]?.airtime.toLocaleString()}
-                      </div>
-                    </div>
-                    <div className="rounded-md border p-3">
-                      <div className="text-sm text-muted-foreground">Data</div>
-                      <div className="text-lg font-bold">
-                        ₦{usageStats[period]?.data.toLocaleString()}
-                      </div>
-                    </div>
+              <TabsContent value="weekly" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="rounded-md border p-3">
+                    <div className="text-sm text-muted-foreground">Airtime</div>
+                    <div className="text-lg font-bold">₦2,500</div>
                   </div>
-                </TabsContent>
-              ))}
+                  <div className="rounded-md border p-3">
+                    <div className="text-sm text-muted-foreground">Data</div>
+                    <div className="text-lg font-bold">₦4,200</div>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="monthly" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="rounded-md border p-3">
+                    <div className="text-sm text-muted-foreground">Airtime</div>
+                    <div className="text-lg font-bold">₦8,500</div>
+                  </div>
+                  <div className="rounded-md border p-3">
+                    <div className="text-sm text-muted-foreground">Data</div>
+                    <div className="text-lg font-bold">₦12,200</div>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="yearly" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="rounded-md border p-3">
+                    <div className="text-sm text-muted-foreground">Airtime</div>
+                    <div className="text-lg font-bold">₦85,500</div>
+                  </div>
+                  <div className="rounded-md border p-3">
+                    <div className="text-sm text-muted-foreground">Data</div>
+                    <div className="text-lg font-bold">₦124,200</div>
+                  </div>
+                </div>
+              </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
