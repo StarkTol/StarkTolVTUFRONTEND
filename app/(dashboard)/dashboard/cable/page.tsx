@@ -11,6 +11,7 @@ import { ProviderSelector } from "@/components/dashboard/provider-selector"
 import { Loader2, CheckCircle2, Tv } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import useCable from "@/hooks/useCable"
 
 export default function CablePage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -29,81 +30,8 @@ export default function CablePage() {
     currentPackage: "",
   })
 
-  // Mock data for recent transactions
-  const recentTransactions = [
-    {
-      id: 1,
-      provider: "DSTV",
-      smartCardNumber: "12345678901",
-      package: "DSTV Premium",
-      amount: "₦24,500",
-      date: "Today, 10:30 AM",
-      status: "success",
-    },
-    {
-      id: 2,
-      provider: "GOTV",
-      smartCardNumber: "98765432109",
-      package: "GOTV Max",
-      amount: "₦4,850",
-      date: "Yesterday, 3:15 PM",
-      status: "success",
-    },
-    {
-      id: 3,
-      provider: "Startimes",
-      smartCardNumber: "45678901234",
-      package: "Startimes Super",
-      amount: "₦4,900",
-      date: "23/04/2023, 9:00 AM",
-      status: "failed",
-    },
-    {
-      id: 4,
-      provider: "DSTV",
-      smartCardNumber: "56789012345",
-      package: "DSTV Compact Plus",
-      amount: "₦18,600",
-      date: "20/04/2023, 11:45 AM",
-      status: "success",
-    },
-  ]
-
-  // Mock data for providers
-  const providers = [
-    { id: "dstv", name: "DSTV", logo: "/dstv.logo.jpg?height=60&width=60" },
-    { id: "gotv", name: "GOTV", logo: "/gotv.logo.jpg?height=60&width=60" },
-    { id: "startimes", name: "Startimes", logo: "/startime.logo.jpg?height=60&width=60" },
-    { id: "showmax", name: "Showmax", logo: "/Showmax.jpg?height=60&width=60" },
-  ]
-
-  // Mock data for packages
-  const packages = {
-    dstv: [
-      { id: "dstv-premium", name: "DSTV Premium", price: "₦24,500" },
-      { id: "dstv-compact-plus", name: "DSTV Compact Plus", price: "₦18,600" },
-      { id: "dstv-compact", name: "DSTV Compact", price: "₦10,500" },
-      { id: "dstv-confam", name: "DSTV Confam", price: "₦7,100" },
-      { id: "dstv-yanga", name: "DSTV Yanga", price: "₦4,200" },
-    ],
-    gotv: [
-      { id: "gotv-max", name: "GOTV Max", price: "₦4,850" },
-      { id: "gotv-jolli", name: "GOTV Jolli", price: "₦3,950" },
-      { id: "gotv-jinja", name: "GOTV Jinja", price: "₦2,250" },
-      { id: "gotv-smallie", name: "GOTV Smallie", price: "₦1,100" },
-    ],
-    startimes: [
-      { id: "startimes-super", name: "Startimes Super", price: "₦4,900" },
-      { id: "startimes-classic", name: "Startimes Classic", price: "₦2,800" },
-      { id: "startimes-basic", name: "Startimes Basic", price: "₦1,850" },
-      { id: "startimes-nova", name: "Startimes Nova", price: "₦1,200" },
-    ],
-    showmax: [
-      { id: "showmax-premium", name: "Showmax Premium", price: "₦5,500" },
-      { id: "showmax-standard", name: "Showmax Standard", price: "₦3,200" },
-      { id: "showmax-mobile", name: "Showmax Mobile", price: "₦1,500" },
-    ],
-  }
+  // Fetch cable data using the hook
+  const { providers, packages, transactions: recentTransactions, loading: dataLoading, error } = useCable()
 
   const handleProviderSelect = (providerId: string) => {
     setSelectedProvider(providerId)
@@ -185,6 +113,56 @@ export default function CablePage() {
   }
 
   const selectedPackage = getSelectedPackageDetails()
+
+  // Show loading state for data fetching
+  if (dataLoading) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">Cable TV Subscription</h1>
+        </div>
+        <div className="grid gap-8 md:grid-cols-3">
+          <div className="md:col-span-2">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-center h-40">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-center h-40">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">Cable TV Subscription</h1>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <p className="text-destructive mb-4">Error loading cable data: {error}</p>
+              <Button onClick={() => window.location.reload()} variant="outline">
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
