@@ -1,311 +1,208 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Building, CreditCard, Smartphone, Copy, CheckCircle2, Loader2, AlertCircle } from "lucide-react"
+import { Loader2, AlertCircle, CreditCard, Smartphone, Building, Zap } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { walletService } from "@/lib/services/walletService"
-import { useUserData } from "@/context/UserDataContext"
+import { useWalletContext } from "@/context/WalletContext"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { toast } from "sonner"
+import { paymentService } from "@/lib/services"
+import { DevModeIndicator } from "@/components/ui/dev-mode-indicator"
+import { DevAuthButton } from "@/components/ui/dev-auth-button"
+import { DevQuickActions } from "@/components/ui/dev-quick-actions"
 
 export default function WalletFundPage() {
   const router = useRouter()
-  const { userData, updateWalletBalance } = useUserData()
-  const [isCopied, setIsCopied] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isDataLoading, setIsDataLoading] = useState(true)
-  const [isSuccess, setIsSuccess] = useState(false)
+  const { balance } = useWalletContext()
+  
+  const [amount, setAmount] = useState("")
+  const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [fundMethod, setFundMethod] = useState("bank")
-  const [fundAmount, setFundAmount] = useState("")
-  const [transactionReference, setTransactionReference] = useState<string | null>(null)
 
-  // Wallet data from API
-  const [walletData, setWalletData] = useState({
-    balance: "₦0.00",
-    accountNumber: "",
-    accountName: "",
-    bankName: "Babs VTU Bank",
-  })
-
-  // Load wallet balance on component mount
-  useEffect(() => {
-    const loadWalletBalance = async () => {
-      try {
-        const balance = await walletService.getBalance()
-        setWalletData(prev => ({
-          ...prev,
-          balance: `₦${balance.toLocaleString()}.00`,
-          accountNumber: userData?.accountNumber || "1234567890", // Fallback for demo
-          accountName: userData?.name || "User",
-        }))
-      } catch (err) {
-        console.error('Failed to load wallet balance:', err)
-        setError('Failed to load wallet information')
-      } finally {
-        setIsDataLoading(false)
-      }
+  // Handle proceed to payment
+  const handleProceedToPayment = async () => {
+    if (!amount || parseFloat(amount) < 100) {
+      setError('Please enter a valid amount (minimum ₦100)')
+      return
     }
 
-    loadWalletBalance()
-  }, [userData])
-
-  const handleCopyAccountNumber = () => {
-    navigator.clipboard.writeText(walletData.accountNumber)
-    setIsCopied(true)
-    setTimeout(() => setIsCopied(false), 2000)
-  }
-
-  const handleFundWallet = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    setIsProcessing(true)
     setError(null)
+    
+    // Show toast notification
+    toast.loading('Redirecting to Flutterwave...')
 
     try {
-      const amount = parseFloat(fundAmount)
-      if (amount < 100) {
-        throw new Error('Minimum funding amount is ₦100')
-      }
-
-      const response = await walletService.fundWallet({
-        amount,
-        method: fundMethod as 'bank' | 'card' | 'ussd',
-        metadata: getFundingMetadata()
-      })
-
-      setTransactionReference(response.reference)
-      setIsSuccess(true)
+      console.log('💰 Payment amount:', amount);
       
-      // Update global wallet balance
-      const newBalance = await walletService.getBalance()
-      updateWalletBalance(newBalance)
-
-      // Reset form after success display
-      setTimeout(() => {
-        setIsSuccess(false)
-        setFundAmount("")
-        router.push("/dashboard/wallet")
-      }, 3000)
-
+      // Use the paymentService to initiate payment
+      const response = await paymentService.initiate({
+        amount: parseFloat(amount)
+      })
+      
+      if (response.success && response.data?.paymentLink) {
+        console.log('🚀 Redirecting to payment link:', response.data.paymentLink)
+        
+        // Redirect to Flutterwave payment page immediately
+        window.location.href = response.data.paymentLink
+      } else {
+        throw new Error(response.message || 'Failed to create payment link')
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to fund wallet')
+      console.error('❌ Payment initiation failed:', err)
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to initiate payment'
+      setError(errorMessage)
+      toast.dismiss()
+      toast.error(errorMessage)
     } finally {
-      setIsLoading(false)
+      setIsProcessing(false)
     }
-  }
-
-  const getFundingMetadata = () => {
-    const form = document.querySelector('form')
-    if (!form) return {}
-
-    const formData = new FormData(form)
-    
-    if (fundMethod === 'card') {
-      return {
-        cardNumber: formData.get('cardNumber') as string,
-        expiryDate: formData.get('expiryDate') as string,
-        cvv: formData.get('cvv') as string,
-        cardName: formData.get('cardName') as string,
-      }
-    }
-    
-    if (fundMethod === 'ussd') {
-      return {
-        phoneNumber: formData.get('phoneNumber') as string,
-        bankName: formData.get('bankName') as string,
-      }
-    }
-    
-    return {}
   }
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Fund Wallet</h1>
-        <Button variant="outline" onClick={() => router.push("/dashboard/wallet")}>
+        <Button variant="outline" onClick={() => router.push("/dashboard/wallet")}> 
           Back to Wallet
         </Button>
       </div>
 
+      {/* Current Balance Display */}
+      <Card className="mx-auto max-w-2xl">
+        <CardContent className="pt-6">
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground mb-2">Current Wallet Balance</p>
+            <p className="text-3xl font-bold text-primary">{balance.formatted}</p>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="mx-auto max-w-2xl">
         <CardHeader>
           <CardTitle>Fund Your Wallet</CardTitle>
-          <CardDescription>Add money to your wallet</CardDescription>
+          <CardDescription>Add money to your wallet using Flutterwave</CardDescription>
         </CardHeader>
         <CardContent>
-          {isSuccess ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
-                <CheckCircle2 className="h-10 w-10 text-green-600" />
-              </div>
-              <h3 className="mb-2 text-2xl font-bold">Wallet Funded!</h3>
-              <p className="mb-2 text-muted-foreground">Your wallet has been successfully funded with ₦{fundAmount}.</p>
-              {transactionReference && (
-                <p className="text-sm text-muted-foreground">
-                  Transaction Reference: {transactionReference}
-                </p>
-              )}
-            </div>
-          ) : (
-            <form onSubmit={handleFundWallet} className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label>Select Funding Method</Label>
-                  <RadioGroup
-                    value={fundMethod}
-                    onValueChange={setFundMethod}
-                    className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3"
-                  >
-                    <div className="flex flex-col items-center rounded-md border p-4 hover:bg-muted/50">
-                      <RadioGroupItem value="bank" id="bank" className="sr-only" />
-                      <Label htmlFor="bank" className="cursor-pointer">
-                        <div className="flex flex-col items-center gap-2">
-                          <Building className="h-8 w-8 text-primary" />
-                          <span className="font-medium">Bank Transfer</span>
-                        </div>
-                      </Label>
-                    </div>
-                    <div className="flex flex-col items-center rounded-md border p-4 hover:bg-muted/50">
-                      <RadioGroupItem value="card" id="card" className="sr-only" />
-                      <Label htmlFor="card" className="cursor-pointer">
-                        <div className="flex flex-col items-center gap-2">
-                          <CreditCard className="h-8 w-8 text-primary" />
-                          <span className="font-medium">Card Payment</span>
-                        </div>
-                      </Label>
-                    </div>
-                    <div className="flex flex-col items-center rounded-md border p-4 hover:bg-muted/50">
-                      <RadioGroupItem value="ussd" id="ussd" className="sr-only" />
-                      <Label htmlFor="ussd" className="cursor-pointer">
-                        <div className="flex flex-col items-center gap-2">
-                          <Smartphone className="h-8 w-8 text-primary" />
-                          <span className="font-medium">USSD</span>
-                        </div>
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
+          <div className="space-y-6">
+            {/* Development Mode Indicator */}
+            <DevModeIndicator />
+            
+            {/* Error Display */}
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {error}
+                </AlertDescription>
+              </Alert>
+            )}
 
-                <div>
-                  <Label htmlFor="amount">Amount (₦)</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    placeholder="Enter amount"
-                    required
-                    min="100"
-                    value={fundAmount}
-                    onChange={(e) => setFundAmount(e.target.value)}
-                  />
-                </div>
-
-                {fundMethod === "bank" && (
-                  <div className="rounded-lg border p-4">
-                    <h3 className="mb-4 font-semibold">Bank Transfer Details</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Account Number</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{walletData.accountNumber}</span>
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopyAccountNumber}>
-                            {isCopied ? (
-                              <CheckCircle2 className="h-4 w-4 text-green-600" />
-                            ) : (
-                              <Copy className="h-4 w-4" />
-                            )}
-                            <span className="sr-only">Copy account number</span>
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Account Name</span>
-                        <span className="font-medium">{walletData.accountName}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Bank Name</span>
-                        <span className="font-medium">{walletData.bankName}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {fundMethod === "card" && (
-                  <div className="space-y-4 rounded-lg border p-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="cardNumber">Card Number</Label>
-                      <Input id="cardNumber" placeholder="1234 5678 9012 3456" required />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="expiryDate">Expiry Date</Label>
-                        <Input id="expiryDate" placeholder="MM/YY" required />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="cvv">CVV</Label>
-                        <Input id="cvv" placeholder="123" required maxLength={3} />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cardName">Name on Card</Label>
-                      <Input id="cardName" placeholder="John Doe" required />
-                    </div>
-                  </div>
-                )}
-
-                {fundMethod === "ussd" && (
-                  <div className="space-y-4 rounded-lg border p-4">
-                    <p className="text-sm text-muted-foreground">
-                      After clicking the button below, you will receive a USSD code to dial on your phone to complete
-                      the transaction.
-                    </p>
-                    <div className="space-y-2">
-                      <Label htmlFor="phoneNumber">Phone Number</Label>
-                      <Input id="phoneNumber" placeholder="Enter your phone number" required />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="bankName">Select Bank</Label>
-                      <select
-                        id="bankName"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <option value="">Select your bank</option>
-                        <option value="gtb">GTBank</option>
-                        <option value="firstbank">First Bank</option>
-                        <option value="zenith">Zenith Bank</option>
-                        <option value="access">Access Bank</option>
-                        <option value="uba">UBA</option>
-                      </select>
-                    </div>
-                  </div>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="amount">Amount (₦)</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  placeholder="Enter amount (minimum ₦100)"
+                  required
+                  min="100"
+                  value={amount}
+                  onChange={(e) => {
+                    setAmount(e.target.value)
+                    setError(null) // Clear error when user types
+                  }}
+                  disabled={isProcessing}
+                />
+                {amount && parseFloat(amount) < 100 && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Minimum amount is ₦100
+                  </p>
                 )}
               </div>
 
-              <Button type="submit" className="w-full" disabled={!fundAmount || isLoading}>
-                {isLoading ? (
+              {/* Payment Methods Info */}
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <div className="mb-4">
+                  <h3 className="font-semibold text-blue-800 mb-2">Pay with Flutterwave</h3>
+                  <p className="text-sm text-blue-700">
+                    You'll be redirected to Flutterwave where you can choose from multiple payment options.
+                  </p>
+                </div>
+                
+                {/* Payment Methods Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div className="flex items-center gap-2 bg-white p-2 rounded border">
+                    <CreditCard className="h-4 w-4 text-blue-600" />
+                    <span className="text-xs font-medium">Cards</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white p-2 rounded border">
+                    <Building className="h-4 w-4 text-green-600" />
+                    <span className="text-xs font-medium">Bank Transfer</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white p-2 rounded border">
+                    <Smartphone className="h-4 w-4 text-purple-600" />
+                    <span className="text-xs font-medium">USSD</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white p-2 rounded border">
+                    <Zap className="h-4 w-4 text-orange-600" />
+                    <span className="text-xs font-medium">Mobile Money</span>
+                  </div>
+                </div>
+                
+                <div className="bg-white p-3 rounded border">
+                  <p className="text-xs text-gray-600 mb-1">✅ All payment methods available on Flutterwave:</p>
+                  <p className="text-xs text-gray-500">
+                    💳 Cards • 🏦 Bank Transfer • 📱 USSD • 🏧 Bank Account • 📱 Mobile Money
+                  </p>
+                </div>
+              </div>
+
+              {/* Proceed to Payment Button */}
+              <Button 
+                onClick={handleProceedToPayment}
+                disabled={!amount || parseFloat(amount) < 100 || isProcessing}
+                className="w-full h-12 text-lg font-semibold"
+                size="lg"
+              >
+                {isProcessing ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Redirecting...
                   </>
                 ) : (
-                  "Fund Wallet"
+                  <>
+                    Proceed to Payment
+                    {amount && parseFloat(amount) >= 100 && (
+                      <span className="ml-2">₦{parseFloat(amount).toLocaleString()}</span>
+                    )}
+                  </>
                 )}
               </Button>
-            </form>
-          )}
+            </div>
+          </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground space-y-1">
             <p>• Minimum funding amount is ₦100</p>
-            <p>• Bank transfers may take up to 5 minutes to reflect in your wallet</p>
-            <p>• Card payments are processed instantly</p>
+            <p>• You'll be redirected to Flutterwave secure payment page</p>
+            <p>• Choose from Cards, Bank Transfer, USSD, Mobile Money, etc.</p>
+            <p>• Your wallet will be updated automatically after payment</p>
           </div>
         </CardFooter>
       </Card>
+      
+      {/* Development Quick Actions */}
+      <div className="mx-auto max-w-2xl">
+        <DevQuickActions onAmountSelect={(selectedAmount) => setAmount(selectedAmount.toString())} />
+      </div>
+      
+      {/* Development Authentication Button */}
+      <DevAuthButton />
     </div>
-  )
+  );
 }

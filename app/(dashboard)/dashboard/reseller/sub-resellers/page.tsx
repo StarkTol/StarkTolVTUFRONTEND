@@ -321,22 +321,22 @@ export default function SubResellersPage() {
                       <TableCell>{reseller.profit}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Send email to sub-reseller">
                             <Mail className="h-4 w-4" />
                             <span className="sr-only">Email</span>
                           </Button>
                           {reseller.status === "pending" ? (
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" aria-label="Approve sub-reseller">
                               <UserCheck className="h-4 w-4" />
                               <span className="sr-only">Approve</span>
                             </Button>
                           ) : reseller.status === "active" ? (
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-600">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-600" aria-label="Deactivate sub-reseller">
                               <UserX className="h-4 w-4" />
                               <span className="sr-only">Deactivate</span>
                             </Button>
                           ) : (
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" aria-label="Activate sub-reseller">
                               <UserCheck className="h-4 w-4" />
                               <span className="sr-only">Activate</span>
                             </Button>

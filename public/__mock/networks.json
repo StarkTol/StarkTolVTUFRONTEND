@@ -1,0 +1,33 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": "mtn",
+      "name": "MTN",
+      "code": "mtn",
+      "status": "active",
+      "serviceTypes": ["airtime", "data"]
+    },
+    {
+      "id": "glo",
+      "name": "Glo",
+      "code": "glo", 
+      "status": "active",
+      "serviceTypes": ["airtime", "data"]
+    },
+    {
+      "id": "airtel",
+      "name": "Airtel",
+      "code": "airtel",
+      "status": "active",
+      "serviceTypes": ["airtime", "data"]
+    },
+    {
+      "id": "9mobile",
+      "name": "9mobile",
+      "code": "9mobile",
+      "status": "active",
+      "serviceTypes": ["airtime", "data"]
+    }
+  ]
+}

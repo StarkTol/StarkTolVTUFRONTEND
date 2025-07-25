@@ -8,15 +8,21 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ProviderSelector } from "@/components/dashboard/provider-selector"
-import { Loader2, CheckCircle2, Tv } from "lucide-react"
+import { Loader2, CheckCircle2, Tv, AlertCircle } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useWalletData } from "@/context/WalletDataContext"
+import { usePurchaseCable } from "@/hooks/vtu"
+import { useTransactions } from "@/hooks/useTransactions"
+import { vtuApi } from "@/src/api/endpoints/vtu"
+import type { CableProvider, CablePlan } from "@/src/api/types"
 
 export default function CablePage() {
-  const [isLoading, setIsLoading] = useState(false)
+  const { balance } = useWalletData()
+  const { mutate: purchaseCable, loading, error: purchaseError, success, data: purchaseResult } = usePurchaseCable()
+  
   const [isVerifying, setIsVerifying] = useState(false)
   const [isVerified, setIsVerified] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     smartCardNumber: "",
@@ -29,45 +35,8 @@ export default function CablePage() {
     currentPackage: "",
   })
 
-  // Mock data for recent transactions
-  const recentTransactions = [
-    {
-      id: 1,
-      provider: "DSTV",
-      smartCardNumber: "12345678901",
-      package: "DSTV Premium",
-      amount: "₦24,500",
-      date: "Today, 10:30 AM",
-      status: "success",
-    },
-    {
-      id: 2,
-      provider: "GOTV",
-      smartCardNumber: "98765432109",
-      package: "GOTV Max",
-      amount: "₦4,850",
-      date: "Yesterday, 3:15 PM",
-      status: "success",
-    },
-    {
-      id: 3,
-      provider: "Startimes",
-      smartCardNumber: "45678901234",
-      package: "Startimes Super",
-      amount: "₦4,900",
-      date: "23/04/2023, 9:00 AM",
-      status: "failed",
-    },
-    {
-      id: 4,
-      provider: "DSTV",
-      smartCardNumber: "56789012345",
-      package: "DSTV Compact Plus",
-      amount: "₦18,600",
-      date: "20/04/2023, 11:45 AM",
-      status: "success",
-    },
-  ]
+  // Fetch real data for recent transactions
+  const { data: recentTransactions, loading: transactionsLoading, error: transactionsError } = useTransactions('cable')
 
   // Mock data for providers
   const providers = [
@@ -152,29 +121,17 @@ export default function CablePage() {
     }, 1500)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
+    if (!selectedProvider || !formData.package || !formData.smartCardNumber) return
 
-    // Simulate transaction processing
-    setTimeout(() => {
-      setIsLoading(false)
-      setIsSuccess(true)
-
-      // Reset form after 5 seconds
-      setTimeout(() => {
-        setIsSuccess(false)
-        setSelectedProvider(null)
-        setIsVerified(false)
-        setCustomerInfo({ name: "", currentPackage: "" })
-        setFormData({
-          smartCardNumber: "",
-          package: "",
-          phoneNumber: "",
-          paymentMethod: "wallet",
-        })
-      }, 5000)
-    }, 1500)
+    // Use the cable purchase hook with correct payload shape
+    // Payload: {provider, package_id, smartcard_number, amount}
+    await purchaseCable({
+      providerId: selectedProvider,
+      planId: formData.package,
+      smartCardNumber: formData.smartCardNumber,
+    })
   }
 
   // Get the selected package details
@@ -200,7 +157,14 @@ export default function CablePage() {
               <CardDescription>Subscribe to your favorite TV packages</CardDescription>
             </CardHeader>
             <CardContent>
-              {isSuccess ? (
+              {purchaseError && (
+                <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-red-700">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="text-sm">{purchaseError}</span>
+                </div>
+              )}
+              
+              {success ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
                   <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
                     <CheckCircle2 className="h-10 w-10 text-green-600" />
@@ -321,8 +285,8 @@ export default function CablePage() {
                     )}
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={!isVerified || !formData.package || isLoading}>
-                    {isLoading ? (
+                  <Button type="submit" className="w-full" disabled={!isVerified || !formData.package || loading}>
+                    {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...
                       </>
@@ -343,29 +307,54 @@ export default function CablePage() {
               <CardDescription>Your recent Cable TV subscriptions</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {recentTransactions.map((transaction) => (
-                  <div key={transaction.id} className="flex items-center justify-between rounded-lg border p-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600">
-                        <Tv className="h-5 w-5" />
+              {transactionsLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : transactionsError ? (
+                <div className="text-center py-8 text-red-600">
+                  Failed to load transactions: {transactionsError}
+                </div>
+              ) : recentTransactions.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No cable transactions found
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentTransactions.map((transaction) => (
+                    <div key={transaction.id} className="flex items-center justify-between rounded-lg border p-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600">
+                          <Tv className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="font-medium">{transaction.providerName || 'Cable TV'}</div>
+                          <div className="text-xs text-muted-foreground">{transaction.description}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-medium">{transaction.provider}</div>
-                        <div className="text-xs text-muted-foreground">{transaction.package}</div>
+                      <div className="text-right">
+                        <div className="font-medium">₦{transaction.amount.toLocaleString()}</div>
+                        <div
+                          className={`text-xs ${
+                            transaction.status === "completed" 
+                              ? "text-green-600" 
+                              : transaction.status === "failed"
+                              ? "text-red-600" 
+                              : "text-yellow-600"
+                          }`}
+                        >
+                          {transaction.status === "completed" 
+                            ? "Successful" 
+                            : transaction.status === "failed"
+                            ? "Failed" 
+                            : "Pending"
+                          }
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-medium">{transaction.amount}</div>
-                      <div
-                        className={`text-xs ${transaction.status === "success" ? "text-green-600" : "text-red-600"}`}
-                      >
-                        {transaction.status === "success" ? "Successful" : "Failed"}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
             <CardFooter>
               <Button variant="outline" size="sm" className="w-full">

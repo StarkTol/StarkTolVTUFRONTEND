@@ -1,0 +1,548 @@
+openapi: 3.0.3
+info:
+  title: Payment & Wallet API
+  description: |
+    API contract for payment processing and wallet management system.
+    This specification serves as the single source of truth for both backend and frontend implementations.
+  version: 1.0.0
+  contact:
+    name: API Support
+servers:
+  - url: https://api.example.com
+    description: Production server
+  - url: https://staging-api.example.com
+    description: Staging server
+
+paths:
+  /api/v1/payment/initiate:
+    post:
+      summary: Initiate a payment transaction
+      description: |
+        Creates a new payment transaction and returns a payment link for the user to complete the payment.
+        The transaction reference (txRef) can be used to track the payment status.
+      operationId: initiatePayment
+      tags:
+        - Payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentInitiateRequest'
+            example:
+              amount: 1000.50
+              userId: "user_123456789"
+      responses:
+        '200':
+          description: Payment initiation successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentInitiateResponse'
+              example:
+                paymentLink: "https://checkout.flutterwave.com/v3/hosted/pay/abc123def456"
+                txRef: "tx_ref_1234567890abcdef"
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Invalid or missing authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/payment/webhook:
+    post:
+      summary: Flutterwave payment webhook
+      description: |
+        Receives payment status updates from Flutterwave.
+        The webhook signature must be verified using the Flutterwave secret hash.
+        This endpoint processes successful, failed, and cancelled payment notifications.
+      operationId: paymentWebhook
+      tags:
+        - Payment
+      parameters:
+        - name: verif-hash
+          in: header
+          required: true
+          description: Flutterwave signature hash for webhook verification
+          schema:
+            type: string
+            example: "3bb5db7c1a5b8d3e7f2a1c4e6b9d8a2f5c3e7b1a9d6c2f8e4a7b5c1d9e3f6a2"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlutterwaveWebhookPayload'
+            example:
+              event: "charge.completed"
+              data:
+                id: 285959875
+                tx_ref: "tx_ref_1234567890abcdef"
+                flw_ref: "flwref_123456789"
+                device_fingerprint: "N/A"
+                amount: 1000.50
+                currency: "NGN"
+                charged_amount: 1000.50
+                app_fee: 14.0
+                merchant_fee: 0
+                processor_response: "Approved"
+                auth_model: "PIN"
+                ip: "197.210.64.96"
+                narration: "CARD Transaction"
+                status: "successful"
+                payment_type: "card"
+                created_at: "2023-01-15T10:30:00.000Z"
+                account_id: 73362
+                customer:
+                  id: 215458542
+                  name: "John Doe"
+                  phone_number: "+2348123456789"
+                  email: "john.doe@example.com"
+                  created_at: "2023-01-15T10:30:00.000Z"
+                card:
+                  first_6digits: "123456"
+                  last_4digits: "7890"
+                  issuer: "MASTERCARD DEBIT"
+                  country: "NG"
+                  type: "DEBIT"
+                  expiry: "02/24"
+      responses:
+        '200':
+          description: Webhook processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Webhook processed successfully"
+        '400':
+          description: Invalid webhook signature or payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/wallet/balance:
+    get:
+      summary: Get wallet balance
+      description: |
+        Retrieves the current wallet balance for the authenticated user.
+        Returns the balance amount and currency information.
+      operationId: getWalletBalance
+      tags:
+        - Wallet
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Wallet balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletBalanceResponse'
+              example:
+                balance: 25000.75
+                currency: "NGN"
+        '401':
+          description: Unauthorized - Invalid or missing authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Wallet not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for user authentication
+
+  schemas:
+    PaymentInitiateRequest:
+      type: object
+      required:
+        - amount
+        - userId
+      properties:
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Payment amount (must be positive)
+          example: 1000.50
+        userId:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Unique identifier for the user initiating the payment
+          example: "user_123456789"
+      additionalProperties: false
+
+    PaymentInitiateResponse:
+      type: object
+      required:
+        - paymentLink
+        - txRef
+      properties:
+        paymentLink:
+          type: string
+          format: uri
+          description: URL for the user to complete the payment
+          example: "https://checkout.flutterwave.com/v3/hosted/pay/abc123def456"
+        txRef:
+          type: string
+          description: Unique transaction reference for tracking
+          example: "tx_ref_1234567890abcdef"
+      additionalProperties: false
+
+    WalletBalanceResponse:
+      type: object
+      required:
+        - balance
+        - currency
+      properties:
+        balance:
+          type: number
+          format: double
+          minimum: 0
+          description: Current wallet balance
+          example: 25000.75
+        currency:
+          type: string
+          enum: ["NGN", "USD", "EUR", "GBP"]
+          description: Currency code (ISO 4217)
+          example: "NGN"
+      additionalProperties: false
+
+    FlutterwaveWebhookPayload:
+      type: object
+      required:
+        - event
+        - data
+      properties:
+        event:
+          type: string
+          enum: 
+            - "charge.completed"
+            - "transfer.completed"
+          description: Type of webhook event
+          example: "charge.completed"
+        data:
+          type: object
+          required:
+            - id
+            - tx_ref
+            - flw_ref
+            - amount
+            - currency
+            - charged_amount
+            - status
+            - customer
+          properties:
+            id:
+              type: integer
+              description: Flutterwave transaction ID
+              example: 285959875
+            tx_ref:
+              type: string
+              description: Your transaction reference
+              example: "tx_ref_1234567890abcdef"
+            flw_ref:
+              type: string
+              description: Flutterwave transaction reference
+              example: "flwref_123456789"
+            device_fingerprint:
+              type: string
+              example: "N/A"
+            amount:
+              type: number
+              format: double
+              description: Original transaction amount
+              example: 1000.50
+            currency:
+              type: string
+              description: Transaction currency
+              example: "NGN"
+            charged_amount:
+              type: number
+              format: double
+              description: Amount charged (including fees)
+              example: 1000.50
+            app_fee:
+              type: number
+              format: double
+              description: Application fee charged
+              example: 14.0
+            merchant_fee:
+              type: number
+              format: double
+              description: Merchant fee
+              example: 0
+            processor_response:
+              type: string
+              description: Response from payment processor
+              example: "Approved"
+            auth_model:
+              type: string
+              description: Authentication model used
+              example: "PIN"
+            ip:
+              type: string
+              format: ipv4
+              description: Customer's IP address
+              example: "197.210.64.96"
+            narration:
+              type: string
+              description: Transaction narration/description
+              example: "CARD Transaction"
+            status:
+              type: string
+              enum: ["successful", "failed", "cancelled"]
+              description: Transaction status
+              example: "successful"
+            payment_type:
+              type: string
+              description: Payment method used
+              example: "card"
+            created_at:
+              type: string
+              format: date-time
+              description: Transaction creation timestamp
+              example: "2023-01-15T10:30:00.000Z"
+            account_id:
+              type: integer
+              description: Flutterwave account ID
+              example: 73362
+            customer:
+              type: object
+              required:
+                - id
+                - email
+              properties:
+                id:
+                  type: integer
+                  description: Customer ID
+                  example: 215458542
+                name:
+                  type: string
+                  description: Customer name
+                  example: "John Doe"
+                phone_number:
+                  type: string
+                  description: Customer phone number
+                  example: "+2348123456789"
+                email:
+                  type: string
+                  format: email
+                  description: Customer email address
+                  example: "john.doe@example.com"
+                created_at:
+                  type: string
+                  format: date-time
+                  description: Customer creation timestamp
+                  example: "2023-01-15T10:30:00.000Z"
+            card:
+              type: object
+              description: Card details (present for card payments)
+              properties:
+                first_6digits:
+                  type: string
+                  description: First 6 digits of the card
+                  example: "123456"
+                last_4digits:
+                  type: string
+                  description: Last 4 digits of the card
+                  example: "7890"
+                issuer:
+                  type: string
+                  description: Card issuer
+                  example: "MASTERCARD DEBIT"
+                country:
+                  type: string
+                  description: Card issuing country
+                  example: "NG"
+                type:
+                  type: string
+                  enum: ["DEBIT", "CREDIT"]
+                  description: Card type
+                  example: "DEBIT"
+                expiry:
+                  type: string
+                  pattern: "^(0[1-9]|1[0-2])\/[0-9]{2}$"
+                  description: Card expiry date (MM/YY format)
+                  example: "02/24"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type/code
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "The provided data is invalid"
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+
+    ValidationErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - validation_errors
+      properties:
+        error:
+          type: string
+          enum: ["VALIDATION_ERROR"]
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "Validation failed"
+        validation_errors:
+          type: array
+          items:
+            type: object
+            required:
+              - field
+              - message
+            properties:
+              field:
+                type: string
+                description: Field that failed validation
+                example: "amount"
+              message:
+                type: string
+                description: Validation error message
+                example: "Amount must be greater than 0"
+              code:
+                type: string
+                description: Validation error code
+                example: "MINIMUM_VALUE"
+
+    # Supabase Realtime Channel Schemas
+    SupabaseWalletUpdate:
+      type: object
+      description: |
+        Payload structure for Supabase realtime channel "wallet_updates".
+        This is broadcast when wallet balance changes occur.
+      required:
+        - type
+        - payload
+      properties:
+        type:
+          type: string
+          enum: ["INSERT", "UPDATE", "DELETE"]
+          description: Type of database operation
+          example: "UPDATE"
+        payload:
+          type: object
+          required:
+            - user_id
+            - balance
+            - currency
+            - updated_at
+          properties:
+            user_id:
+              type: string
+              description: User ID whose wallet was updated
+              example: "user_123456789"
+            balance:
+              type: number
+              format: double
+              minimum: 0
+              description: New wallet balance
+              example: 25000.75
+            currency:
+              type: string
+              enum: ["NGN", "USD", "EUR", "GBP"]
+              description: Wallet currency
+              example: "NGN"
+            previous_balance:
+              type: number
+              format: double
+              minimum: 0
+              description: Previous balance (only present for UPDATE events)
+              example: 24000.25
+            transaction_type:
+              type: string
+              enum: ["CREDIT", "DEBIT"]
+              description: Type of transaction that caused the update
+              example: "CREDIT"
+            transaction_ref:
+              type: string
+              description: Reference to the transaction that caused this update
+              example: "tx_ref_1234567890abcdef"
+            amount:
+              type: number
+              format: double
+              description: Amount of the transaction
+              example: 1000.50
+            updated_at:
+              type: string
+              format: date-time
+              description: Timestamp when the wallet was updated
+              example: "2023-01-15T10:35:00.000Z"
+        event_id:
+          type: string
+          description: Unique identifier for this realtime event
+          example: "evt_1234567890abcdef"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when the event was generated
+          example: "2023-01-15T10:35:00.100Z"
+
+tags:
+  - name: Payment
+    description: Payment processing operations
+  - name: Wallet
+    description: Wallet management operations

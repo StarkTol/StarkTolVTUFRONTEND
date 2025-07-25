@@ -31,7 +31,7 @@ export interface BasePurchaseResponse {
   }
 }
 
-export type PaymentMethod = 'wallet' | 'card'
+export type PaymentMethod = 'wallet' | 'card' | 'flutterwave'
 export type MeterType = 'prepaid' | 'postpaid'
 export type TransactionStatus = 'success' | 'pending' | 'failed'
 
@@ -137,7 +137,7 @@ export interface WalletTransaction extends BaseTransaction {
 
 export interface WalletFundRequest {
   amount: number
-  method: 'bank_transfer' | 'card' | 'ussd'
+  method: 'bank_transfer' | 'card' | 'ussd' | 'flutterwave'
   metadata?: {
     cardNumber?: string
     expiryDate?: string
@@ -145,6 +145,10 @@ export interface WalletFundRequest {
     cardName?: string
     phoneNumber?: string
     bankCode?: string
+    // Flutterwave specific metadata
+    email?: string
+    name?: string
+    flwRef?: string
   }
 }
 
@@ -163,6 +167,9 @@ export interface WalletFundResponse extends BasePurchaseResponse {
       accountName: string
       bankName: string
     }
+    // Flutterwave specific response data
+    flutterwaveRef?: string
+    txRef?: string
   }
 }
 

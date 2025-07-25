@@ -1,0 +1,41 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": "mtn-1gb-monthly",
+      "name": "1GB Monthly",
+      "networkId": "mtn",
+      "size": "1GB",
+      "amount": 350,
+      "validity": "30 days",
+      "description": "1GB data bundle valid for 30 days"
+    },
+    {
+      "id": "mtn-2gb-monthly", 
+      "name": "2GB Monthly",
+      "networkId": "mtn",
+      "size": "2GB",
+      "amount": 700,
+      "validity": "30 days",
+      "description": "2GB data bundle valid for 30 days"
+    },
+    {
+      "id": "glo-1gb-monthly",
+      "name": "1GB Monthly",
+      "networkId": "glo",
+      "size": "1GB", 
+      "amount": 330,
+      "validity": "30 days",
+      "description": "1GB data bundle valid for 30 days"
+    },
+    {
+      "id": "airtel-1gb-monthly",
+      "name": "1GB Monthly",
+      "networkId": "airtel",
+      "size": "1GB",
+      "amount": 370,
+      "validity": "30 days", 
+      "description": "1GB data bundle valid for 30 days"
+    }
+  ]
+}

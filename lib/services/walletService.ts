@@ -8,7 +8,7 @@ export interface WalletBalance {
 
 export interface WalletFundRequest {
   amount: number
-  method: 'bank_transfer' | 'card' | 'ussd'
+  method: 'bank_transfer' | 'card' | 'ussd' | 'flutterwave'
   metadata?: {
     cardNumber?: string
     expiryDate?: string
@@ -16,6 +16,13 @@ export interface WalletFundRequest {
     cardName?: string
     phoneNumber?: string
     bankCode?: string
+    // Flutterwave specific metadata
+    email?: string
+    name?: string
+    flwRef?: string
+    txRef?: string
+    transactionId?: string
+    paymentType?: string
   }
 }
 
@@ -51,6 +58,9 @@ export interface WalletFundResponse {
       accountName: string
       bankName: string
     }
+    // Flutterwave specific response data
+    flutterwaveRef?: string
+    txRef?: string
   }
 }
 

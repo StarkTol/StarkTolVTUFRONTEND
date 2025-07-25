@@ -1,0 +1,33 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": "ekedc",
+      "name": "Eko Electricity Distribution Company",
+      "code": "ekedc",
+      "status": "active",
+      "shortName": "EKEDC"
+    },
+    {
+      "id": "ikedc",
+      "name": "Ikeja Electric Distribution Company",
+      "code": "ikedc",
+      "status": "active",
+      "shortName": "IKEDC"
+    },
+    {
+      "id": "kaedc",
+      "name": "Kaduna Electricity Distribution Company",
+      "code": "kaedc",
+      "status": "active",
+      "shortName": "KAEDC"
+    },
+    {
+      "id": "eedc",
+      "name": "Enugu Electricity Distribution Company",
+      "code": "eedc",
+      "status": "active",
+      "shortName": "EEDC"
+    }
+  ]
+}

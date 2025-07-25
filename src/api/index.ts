@@ -14,6 +14,25 @@ export type {
   HttpClientConfig
 } from './httpClient'
 
+// Export Centralized API Client
+export { 
+  apiClient, 
+  ApiClient, 
+  getList, 
+  getOne, 
+  post, 
+  put, 
+  patch, 
+  delete as del, 
+  request 
+} from './client'
+export type { 
+  ApiClientConfig,
+  QueryParams,
+  ApiClientResponse,
+  ApiClientListResponse
+} from './client'
+
 // Export Types
 export * from './types'
 
@@ -74,6 +93,31 @@ export {
   getAirtimeDenominationSuggestions,
   scheduleAirtime
 } from './endpoints/airtime'
+
+// Export VTU Endpoints
+export {
+  vtuApi,
+  getNetworks,
+  getDataPlans,
+  getCableProviders,
+  getCablePackages,
+  getElectricityProviders,
+  purchaseAirtime as vtuPurchaseAirtime,
+  purchaseData,
+  purchaseCable,
+  purchaseElectricity,
+  getAirtimeProviders as vtuGetAirtimeProviders,
+  getDataProviders,
+  getDataPlan,
+  getCablePackage,
+  getElectricityProvider,
+  validateCableCard,
+  validateElectricityMeter,
+  getVTUTransactions,
+  getVTUStats,
+  getFrequentBeneficiaries,
+  getServiceRates
+} from './endpoints/vtu'
 
 // Main API Object - For backwards compatibility and convenience
 export const api = {
@@ -239,7 +283,7 @@ export function clearAuthData(): void {
  */
 export const API_CONFIG = {
   // Base URL (can be overridden via environment variable)
-  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://backend-066c.onrender.com/api/v1',
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000',
   
   // Timeout settings
   DEFAULT_TIMEOUT: 30000, // 30 seconds

@@ -12,94 +12,190 @@ import { ProviderSelector } from "@/components/dashboard/provider-selector"
 import { Loader2, CheckCircle2, Wifi, AlertCircle } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { dataService, type DataProvider, type DataBundle } from "@/lib/services/dataService"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useUserData } from "@/context/UserDataContext"
+import { useWalletData } from "@/context/WalletDataContext"
+import { usePurchaseData } from "@/hooks/vtu"
+import { vtuApi } from "@/src/api/endpoints/vtu"
+import type { DataProvider, DataPlan } from "@/src/api/types"
 
 export default function DataPage() {
-  const { profile, refreshUserData } = useUserData()
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
-  const [error, setError] = useState<string>('')
+  const { profile } = useUserData()
+  const { balance, recentTransactions } = useWalletData()
+  const { mutate: purchaseData, loading, error: purchaseError, success, data: purchaseResult } = usePurchaseData()
+  
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null)
   const [providers, setProviders] = useState<DataProvider[]>([])
-  const [dataBundles, setDataBundles] = useState<Record<string, DataBundle[]>>({})
-  const [recentTransactions, setRecentTransactions] = useState<any[]>([])
-  const [loadingData, setLoadingData] = useState(true)
-  const [transactionResult, setTransactionResult] = useState<any>(null)
+  const [dataPlans, setDataPlans] = useState<Record<string, DataPlan[]>>({})
+  const [loadingProviders, setLoadingProviders] = useState(true)
   const [formData, setFormData] = useState({
     phoneNumber: "",
     dataBundle: "",
     paymentMethod: "wallet",
   })
 
-  // Load providers, bundles and recent transactions on component mount
+  // Load providers and plans on component mount
   useEffect(() => {
     loadProviders()
-    loadAllDataBundles()
-    loadRecentTransactions()
+    loadDataPlans()
   }, [])
 
   const loadProviders = async () => {
     try {
-      const providersData = await dataService.getProviders()
-      setProviders(providersData)
+      setLoadingProviders(true)
+      const response = await vtuApi.getDataProviders()
+      if (response.success && response.data) {
+        setProviders(response.data)
+      } else {
+        // Fallback to default providers if API fails
+        setProviders([
+          { 
+            id: "mtn", 
+            name: "MTN", 
+            slug: "mtn",
+            logo: "/mtn.logo.jpg", 
+            status: 'active',
+            category: 'data',
+            features: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            discountRate: 0.02
+          },
+          { 
+            id: "airtel", 
+            name: "Airtel", 
+            slug: "airtel",
+            logo: "/airtel.logo.jpg", 
+            status: 'active',
+            category: 'data',
+            features: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            discountRate: 0.02
+          },
+          { 
+            id: "glo", 
+            name: "Glo", 
+            slug: "glo",
+            logo: "/glo.logo.jpg", 
+            status: 'active',
+            category: 'data',
+            features: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            discountRate: 0.02
+          },
+          { 
+            id: "9mobile", 
+            name: "9mobile", 
+            slug: "9mobile",
+            logo: "/etisalate.logo.jpg", 
+            status: 'active',
+            category: 'data',
+            features: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            discountRate: 0.02
+          }
+        ])
+      }
     } catch (error) {
       console.error('Failed to load providers:', error)
-      // Fallback to default providers if API fails
-      setProviders([
-        { id: "mtn", name: "MTN", logo: "/mtn.logo.jpg?height=60&width=60", status: 'active' },
-        { id: "airtel", name: "Airtel", logo: "/airtel.logo.jpg?height=60&width=60", status: 'active' },
-        { id: "glo", name: "Glo", logo: "/glo.logo.jpg?height=60&width=60", status: 'active' },
-        { id: "9mobile", name: "9mobile", logo: "/etisalate.logo.jpg?height=60&width=60", status: 'active' },
-      ])
-    }
-  }
-
-  const loadAllDataBundles = async () => {
-    try {
-      setLoadingData(true)
-      const bundlesData = await dataService.getAllDataBundles()
-      setDataBundles(bundlesData)
-    } catch (error) {
-      console.error('Failed to load data bundles:', error)
-      // Fallback to default bundles if API fails
-      setDataBundles({
-        mtn: [
-          { id: "mtn-100mb", name: "100MB", size: "100MB", validity: "1 Day", price: 100, provider: "mtn" },
-          { id: "mtn-1gb", name: "1GB", size: "1GB", validity: "30 Days", price: 1000, provider: "mtn" },
-          { id: "mtn-2gb", name: "2GB", size: "2GB", validity: "30 Days", price: 2000, provider: "mtn" },
-          { id: "mtn-5gb", name: "5GB", size: "5GB", validity: "30 Days", price: 3500, provider: "mtn" },
-        ],
-        airtel: [
-          { id: "airtel-100mb", name: "100MB", size: "100MB", validity: "1 Day", price: 100, provider: "airtel" },
-          { id: "airtel-1gb", name: "1GB", size: "1GB", validity: "30 Days", price: 1000, provider: "airtel" },
-          { id: "airtel-2gb", name: "2GB", size: "2GB", validity: "30 Days", price: 2000, provider: "airtel" },
-          { id: "airtel-5gb", name: "5GB", size: "5GB", validity: "30 Days", price: 3500, provider: "airtel" },
-        ],
-        glo: [
-          { id: "glo-100mb", name: "100MB", size: "100MB", validity: "1 Day", price: 100, provider: "glo" },
-          { id: "glo-1gb", name: "1GB", size: "1GB", validity: "30 Days", price: 1000, provider: "glo" },
-          { id: "glo-2gb", name: "2GB", size: "2GB", validity: "30 Days", price: 2000, provider: "glo" },
-          { id: "glo-5gb", name: "5GB", size: "5GB", validity: "30 Days", price: 3500, provider: "glo" },
-        ],
-        "9mobile": [
-          { id: "9mobile-100mb", name: "100MB", size: "100MB", validity: "1 Day", price: 100, provider: "9mobile" },
-          { id: "9mobile-1gb", name: "1GB", size: "1GB", validity: "30 Days", price: 1000, provider: "9mobile" },
-          { id: "9mobile-2gb", name: "2GB", size: "2GB", validity: "30 Days", price: 2000, provider: "9mobile" },
-          { id: "9mobile-5gb", name: "5GB", size: "5GB", validity: "30 Days", price: 3500, provider: "9mobile" },
-        ],
-      })
     } finally {
-      setLoadingData(false)
+      setLoadingProviders(false)
     }
   }
 
-  const loadRecentTransactions = async () => {
+  const loadDataPlans = async () => {
     try {
-      const transactions = await dataService.getRecentTransactions(5)
-      setRecentTransactions(transactions)
+      const response = await vtuApi.getAllDataPlans()
+      if (response.success && response.data) {
+        setDataPlans(response.data)
+      } else {
+        // Fallback to default plans if API fails
+        setDataPlans({
+          mtn: [
+            { 
+              id: "mtn-100mb", 
+              providerId: "mtn",
+              name: "100MB", 
+              size: "100MB", 
+              validity: "1 Day", 
+              price: 100, 
+              discountedPrice: 98,
+              planCode: "MTN100MB",
+              planType: 'sme',
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            },
+            { 
+              id: "mtn-1gb", 
+              providerId: "mtn",
+              name: "1GB", 
+              size: "1GB", 
+              validity: "30 Days", 
+              price: 1000, 
+              discountedPrice: 980,
+              planCode: "MTN1GB",
+              planType: 'sme',
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+          ],
+          airtel: [
+            { 
+              id: "airtel-1gb", 
+              providerId: "airtel",
+              name: "1GB", 
+              size: "1GB", 
+              validity: "30 Days", 
+              price: 1000, 
+              discountedPrice: 980,
+              planCode: "AIRTEL1GB",
+              planType: 'sme',
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+          ],
+          glo: [
+            { 
+              id: "glo-1gb", 
+              providerId: "glo",
+              name: "1GB", 
+              size: "1GB", 
+              validity: "30 Days", 
+              price: 1000, 
+              discountedPrice: 980,
+              planCode: "GLO1GB",
+              planType: 'sme',
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+          ],
+          "9mobile": [
+            { 
+              id: "9mobile-1gb", 
+              providerId: "9mobile",
+              name: "1GB", 
+              size: "1GB", 
+              validity: "30 Days", 
+              price: 1000, 
+              discountedPrice: 980,
+              planCode: "9MOBILE1GB",
+              planType: 'sme',
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+          ]
+        })
+      }
     } catch (error) {
-      console.error('Failed to load recent transactions:', error)
+      console.error('Failed to load data plans:', error)
     }
   }
 
@@ -125,57 +221,37 @@ export default function DataPage() {
     e.preventDefault()
     if (!selectedProvider || !formData.dataBundle) return
 
-    setIsLoading(true)
-    setError('')
+    // Use the data purchase hook with correct payload shape
+    // Payload: {network, phone_number, plan_id, amount} (amount is plan price)
+    await purchaseData({
+      providerId: selectedProvider,
+      planId: formData.dataBundle,
+      phoneNumber: formData.phoneNumber,
+    })
+  }
 
-    try {
-      const result = await dataService.purchaseDataBundle({
-        provider: selectedProvider,
-        phoneNumber: formData.phoneNumber,
-        bundleId: formData.dataBundle,
-        paymentMethod: formData.paymentMethod as 'wallet' | 'card'
-      })
+  // Get the selected plan details
+  const getSelectedPlanDetails = (): DataPlan | null => {
+    if (!selectedProvider || !formData.dataBundle || !dataPlans[selectedProvider]) return null
+    const plans = dataPlans[selectedProvider]
+    return plans.find((plan) => plan.id === formData.dataBundle) || null
+  }
 
-      if (result.success) {
-        setTransactionResult(result.data)
-        setIsSuccess(true)
-        
-        // Refresh user data to update wallet balance
-        await refreshUserData()
-        
-        // Reload recent transactions
-        await loadRecentTransactions()
-
-        // Reset form after 5 seconds
-        setTimeout(() => {
-          setIsSuccess(false)
-          setTransactionResult(null)
-          setSelectedProvider(null)
-          setFormData({
-            phoneNumber: "",
-            dataBundle: "",
-            paymentMethod: "wallet",
-          })
-        }, 5000)
-      } else {
-        setError(result.message)
-      }
-    } catch (error: any) {
-      console.error('Data purchase failed:', error)
-      setError('Failed to purchase data bundle. Please try again.')
-    } finally {
-      setIsLoading(false)
+  // Reset form after successful purchase
+  useEffect(() => {
+    if (success) {
+      setTimeout(() => {
+        setSelectedProvider(null)
+        setFormData({
+          phoneNumber: "",
+          dataBundle: "",
+          paymentMethod: "wallet",
+        })
+      }, 3000)
     }
-  }
+  }, [success])
 
-  // Get the selected bundle details
-  const getSelectedBundleDetails = (): DataBundle | null => {
-    if (!selectedProvider || !formData.dataBundle || !dataBundles[selectedProvider]) return null
-    const bundles = dataBundles[selectedProvider]
-    return bundles.find((bundle) => bundle.id === formData.dataBundle) || null
-  }
-
-  const selectedBundle = getSelectedBundleDetails()
+  const selectedPlan = getSelectedPlanDetails()
 
   return (
     <div className="space-y-8">
@@ -191,26 +267,26 @@ export default function DataPage() {
               <CardDescription>Buy data for any network in Nigeria</CardDescription>
             </CardHeader>
             <CardContent>
-              {error && (
+              {purchaseError && (
                 <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-red-700">
                   <AlertCircle className="h-4 w-4" />
-                  <span className="text-sm">{error}</span>
+                  <span className="text-sm">{purchaseError}</span>
                 </div>
               )}
               
-              {isSuccess ? (
+              {success ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
                   <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
                     <CheckCircle2 className="h-10 w-10 text-green-600" />
                   </div>
                   <h3 className="mb-2 text-2xl font-bold">Transaction Successful!</h3>
                   <p className="mb-2 text-muted-foreground">
-                    You have successfully purchased {selectedBundle?.size} {selectedBundle?.validity} data for {formData.phoneNumber}.
+                    You have successfully purchased {selectedPlan?.size} {selectedPlan?.validity} data for {formData.phoneNumber}.
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Transaction Reference: {transactionResult?.reference || `BVTU${Math.floor(Math.random() * 1000000000)}`}
+                    Transaction Reference: {purchaseResult?.reference || 'Processing...'}
                   </p>
-                  {transactionResult?.status === 'pending' && (
+                  {purchaseResult?.status === 'pending' && (
                     <p className="mt-2 text-sm text-orange-600">
                       Transaction is being processed. You'll receive a confirmation shortly.
                     </p>
@@ -221,11 +297,20 @@ export default function DataPage() {
                   <div className="space-y-4">
                     <div>
                       <Label>Select Network Provider</Label>
-                      <ProviderSelector
-                        providers={providers}
-                        selectedProvider={selectedProvider}
-                        onSelect={handleProviderSelect}
-                      />
+                      {loadingProviders ? (
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          <Skeleton className="h-16 w-full" />
+                          <Skeleton className="h-16 w-full" />
+                          <Skeleton className="h-16 w-full" />
+                          <Skeleton className="h-16 w-full" />
+                        </div>
+                      ) : (
+                        <ProviderSelector
+                          providers={providers}
+                          selectedProvider={selectedProvider}
+                          onSelect={handleProviderSelect}
+                        />
+                      )}
                     </div>
 
                     <div>
@@ -243,22 +328,26 @@ export default function DataPage() {
                     {selectedProvider && (
                       <div>
                         <Label htmlFor="dataBundle">Select Data Bundle</Label>
-                        <Select onValueChange={handleDataBundleChange} value={formData.dataBundle}>
-                          <SelectTrigger id="dataBundle">
-                            <SelectValue placeholder="Select a data bundle" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {dataBundles[selectedProvider]?.map((bundle) => (
-                              <SelectItem key={bundle.id} value={bundle.id}>
-                                {bundle.size} - {bundle.validity} - ₦{bundle.price.toLocaleString()}
-                              </SelectItem>
-                            )) || (
-                              <SelectItem value="" disabled>
-                                No bundles available
-                              </SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
+                        {!dataPlans[selectedProvider] || dataPlans[selectedProvider].length === 0 ? (
+                          <Skeleton className="h-10 w-full" />
+                        ) : (
+                          <Select onValueChange={handleDataBundleChange} value={formData.dataBundle}>
+                            <SelectTrigger id="dataBundle">
+                              <SelectValue placeholder="Select a data bundle" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {dataPlans[selectedProvider]?.map((plan) => (
+                                <SelectItem key={plan.id} value={plan.id}>
+                                  {plan.size} - {plan.validity} - ₦{plan.price.toLocaleString()}
+                                </SelectItem>
+                              )) || (
+                                <SelectItem value="" disabled>
+                                  No plans available
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        )}
                       </div>
                     )}
 
@@ -272,7 +361,7 @@ export default function DataPage() {
                         <div className="flex items-center space-x-2 rounded-md border p-3">
                           <RadioGroupItem value="wallet" id="wallet" />
                           <Label htmlFor="wallet" className="flex-1 cursor-pointer font-normal">
-                            Wallet Balance ({profile ? `₦${profile.wallet_balance.toLocaleString()}` : '₦0.00'})
+                            Wallet Balance ({balance ? `₦${balance.balance.toLocaleString()}` : '₦0.00'})
                           </Label>
                         </div>
                       </RadioGroup>
@@ -282,9 +371,9 @@ export default function DataPage() {
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={!selectedProvider || !formData.dataBundle || isLoading}
+                    disabled={!selectedProvider || !formData.dataBundle || loading}
                   >
-                    {isLoading ? (
+                    {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...
                       </>
@@ -305,10 +394,11 @@ export default function DataPage() {
               <CardDescription>Your recent data purchases</CardDescription>
             </CardHeader>
             <CardContent>
-              {loadingData ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                  <span className="ml-2 text-sm text-muted-foreground">Loading recent transactions...</span>
+              {loadingProviders ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
                 </div>
               ) : (
               <div className="space-y-4">
@@ -369,86 +459,86 @@ export default function DataPage() {
             </TabsList>
             <TabsContent value="mtn" className="mt-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-                {dataBundles.mtn?.map((bundle) => (
+                {dataPlans.mtn?.map((plan) => (
                   <Button
-                    key={bundle.id}
+                    key={plan.id}
                     variant="outline"
                     className="h-auto justify-between py-6"
                     onClick={() => {
                       setSelectedProvider("mtn")
-                      setFormData((prev) => ({ ...prev, dataBundle: bundle.id }))
+                      setFormData((prev) => ({ ...prev, dataBundle: plan.id }))
                     }}
                   >
                     <div className="flex flex-col items-start">
-                      <span className="text-lg font-bold">{bundle.size}</span>
-                      <span className="text-sm text-muted-foreground">{bundle.validity}</span>
+                      <span className="text-lg font-bold">{plan.size}</span>
+                      <span className="text-sm text-muted-foreground">{plan.validity}</span>
                     </div>
-                    <span className="text-lg font-bold">₦{bundle.price.toLocaleString()}</span>
+                    <span className="text-lg font-bold">₦{plan.price.toLocaleString()}</span>
                   </Button>
-                )) || <div className="text-center py-8 text-muted-foreground">No MTN bundles available</div>}
+                )) || <div className="text-center py-8 text-muted-foreground">No MTN plans available</div>}
               </div>
             </TabsContent>
             <TabsContent value="airtel" className="mt-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-                {dataBundles.airtel?.map((bundle) => (
+                {dataPlans.airtel?.map((plan) => (
                   <Button
-                    key={bundle.id}
+                    key={plan.id}
                     variant="outline"
                     className="h-auto justify-between py-6"
                     onClick={() => {
                       setSelectedProvider("airtel")
-                      setFormData((prev) => ({ ...prev, dataBundle: bundle.id }))
+                      setFormData((prev) => ({ ...prev, dataBundle: plan.id }))
                     }}
                   >
                     <div className="flex flex-col items-start">
-                      <span className="text-lg font-bold">{bundle.size}</span>
-                      <span className="text-sm text-muted-foreground">{bundle.validity}</span>
+                      <span className="text-lg font-bold">{plan.size}</span>
+                      <span className="text-sm text-muted-foreground">{plan.validity}</span>
                     </div>
-                    <span className="text-lg font-bold">₦{bundle.price.toLocaleString()}</span>
+                    <span className="text-lg font-bold">₦{plan.price.toLocaleString()}</span>
                   </Button>
-                )) || <div className="text-center py-8 text-muted-foreground">No Airtel bundles available</div>}
+                )) || <div className="text-center py-8 text-muted-foreground">No Airtel plans available</div>}
               </div>
             </TabsContent>
             <TabsContent value="glo" className="mt-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-                {dataBundles.glo?.map((bundle) => (
+                {dataPlans.glo?.map((plan) => (
                   <Button
-                    key={bundle.id}
+                    key={plan.id}
                     variant="outline"
                     className="h-auto justify-between py-6"
                     onClick={() => {
                       setSelectedProvider("glo")
-                      setFormData((prev) => ({ ...prev, dataBundle: bundle.id }))
+                      setFormData((prev) => ({ ...prev, dataBundle: plan.id }))
                     }}
                   >
                     <div className="flex flex-col items-start">
-                      <span className="text-lg font-bold">{bundle.size}</span>
-                      <span className="text-sm text-muted-foreground">{bundle.validity}</span>
+                      <span className="text-lg font-bold">{plan.size}</span>
+                      <span className="text-sm text-muted-foreground">{plan.validity}</span>
                     </div>
-                    <span className="text-lg font-bold">₦{bundle.price.toLocaleString()}</span>
+                    <span className="text-lg font-bold">₦{plan.price.toLocaleString()}</span>
                   </Button>
-                )) || <div className="text-center py-8 text-muted-foreground">No Glo bundles available</div>}
+                )) || <div className="text-center py-8 text-muted-foreground">No Glo plans available</div>}
               </div>
             </TabsContent>
             <TabsContent value="9mobile" className="mt-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-                {dataBundles["9mobile"]?.map((bundle) => (
+                {dataPlans["9mobile"]?.map((plan) => (
                   <Button
-                    key={bundle.id}
+                    key={plan.id}
                     variant="outline"
                     className="h-auto justify-between py-6"
                     onClick={() => {
                       setSelectedProvider("9mobile")
-                      setFormData((prev) => ({ ...prev, dataBundle: bundle.id }))
+                      setFormData((prev) => ({ ...prev, dataBundle: plan.id }))
                     }}
                   >
                     <div className="flex flex-col items-start">
-                      <span className="text-lg font-bold">{bundle.size}</span>
-                      <span className="text-sm text-muted-foreground">{bundle.validity}</span>
+                      <span className="text-lg font-bold">{plan.size}</span>
+                      <span className="text-sm text-muted-foreground">{plan.validity}</span>
                     </div>
-                    <span className="text-lg font-bold">₦{bundle.price.toLocaleString()}</span>
+                    <span className="text-lg font-bold">₦{plan.price.toLocaleString()}</span>
                   </Button>
-                )) || <div className="text-center py-8 text-muted-foreground">No 9mobile bundles available</div>}
+                )) || <div className="text-center py-8 text-muted-foreground">No 9mobile plans available</div>}
               </div>
             </TabsContent>
           </Tabs>

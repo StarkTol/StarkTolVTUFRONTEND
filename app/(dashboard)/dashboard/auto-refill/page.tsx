@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,6 +22,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useWalletData } from "@/context/WalletDataContext"
+import { autoRefillService } from "@/src/api/services"
+import type { AutoRefillSchedule } from "@/src/api/types"
 
 export default function AutoRefillPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -29,6 +32,10 @@ export default function AutoRefillPage() {
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("airtime")
+  const [error, setError] = useState<string | null>(null)
+  const [schedules, setSchedules] = useState<AutoRefillSchedule[]>([])
+  const [loadingSchedules, setLoadingSchedules] = useState(true)
+  const { balance, recentTransactions, walletStats, loading: walletLoading, error: walletError } = useWalletData()
   const [formData, setFormData] = useState({
     serviceType: "airtime",
     phoneNumber: "",

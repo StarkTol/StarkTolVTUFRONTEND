@@ -18,33 +18,8 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
 
-  // Mock user data
-  const [userData, setUserData] = useState({
-    fullName: "John Doe",
-    email: "john@example.com",
-    phone: "08012345678",
-    address: "123 Example Street, Lagos, Nigeria",
-    avatar: "",
-    notifications: {
-      email: true,
-      sms: true,
-      push: false,
-      marketing: false,
-      transactionAlerts: true,
-      promotions: false,
-      newsletter: true,
-    },
-    security: {
-      twoFactor: false,
-      loginAlerts: true,
-      transactionPin: true,
-    },
-    bankDetails: {
-      bankName: "GTBank",
-      accountNumber: "0123456789",
-      accountName: "John Doe",
-    },
-  })
+  // Use real user data from context or API
+  const { userData, setUserData } = useUserData() // Example: replace with your actual context/hook
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target

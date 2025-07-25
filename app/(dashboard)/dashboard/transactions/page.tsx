@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { getAllTransactions, exportTransactions, downloadTransactionReceipt } from "@/lib/api/transactions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,158 +23,85 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Skeleton } from "@/components/ui/skeleton"
+import type { BaseTransaction } from "@/lib/api/types"
+import { formatDistanceToNow, format } from "date-fns"
 
 export default function TransactionsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [typeFilter, setTypeFilter] = useState("all")
   const [dateFilter, setDateFilter] = useState("all")
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+  const [selectedTransaction, setSelectedTransaction] = useState<BaseTransaction | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [transactions, setTransactions] = useState<BaseTransaction[]>([])
+  const [loading, setLoading] = useState(false)
+  const [exportLoading, setExportLoading] = useState(false)
 
-  // Mock transaction data
-  interface Transaction {
-    id: number
-    type: string
-    description: string
-    amount: string
-    date: string
-    time: string
-    status: string
-    reference: string
-    recipient?: string
-    provider?: string
-    paymentMethod: string
+  // Load transactions on component mount and when filters change
+  useEffect(() => {
+    loadTransactions()
+  }, [statusFilter, typeFilter, dateFilter])
+
+  // Removed mock transactions - using real API data only
+
+  // Load transactions from API based on filters
+  const loadTransactions = async () => {
+    setLoading(true)
+    try {
+      console.log('🔄 Loading transactions with filters:', { status: statusFilter, type: typeFilter, date: dateFilter })
+      
+      // Convert filters to API parameters
+      const limit = 50  // Load more transactions for better UX
+      const offset = 0  // Start from beginning (add pagination later if needed)
+      let type = typeFilter !== 'all' ? typeFilter : undefined
+      let status = statusFilter !== 'all' ? statusFilter as 'success' | 'pending' | 'failed' : undefined
+      
+      // Handle date filter conversion
+      let dateFrom: string | undefined
+      let dateTo: string | undefined
+      
+      if (dateFilter !== 'all') {
+        const now = new Date()
+        switch (dateFilter) {
+          case 'today':
+            dateFrom = now.toISOString().split('T')[0]
+            dateTo = now.toISOString().split('T')[0]
+            break
+          case 'week':
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+            dateFrom = weekAgo.toISOString().split('T')[0]
+            dateTo = now.toISOString().split('T')[0]
+            break
+          case 'month':
+            const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())
+            dateFrom = monthAgo.toISOString().split('T')[0]
+            dateTo = now.toISOString().split('T')[0]
+            break
+        }
+      }
+      
+      const result = await getAllTransactions(limit, offset, type, status, dateFrom, dateTo)
+      
+      if (result.success && result.data) {
+        setTransactions(Array.isArray(result.data) ? result.data : [])
+        console.log('✅ Transactions loaded:', Array.isArray(result.data) ? result.data.length : 0, 'items')
+      } else {
+        console.log('⚠️ No transactions found in API response:', result)
+        setTransactions([])
+      }
+    } catch (error: any) {
+      console.error('❌ Failed to fetch transactions:', error)
+      // Don't clear existing transactions on error
+      if (transactions.length === 0) {
+        setTransactions([])
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const transactions: Transaction[] = [
-    {
-      id: 1,
-      type: "airtime",
-      description: "MTN Airtime Purchase",
-      amount: "₦1,000",
-      date: "May 2, 2023",
-      time: "10:30 AM",
-      status: "success",
-      reference: "BVTU123456789",
-      recipient: "08012345678",
-      provider: "MTN",
-      paymentMethod: "Wallet",
-    },
-    {
-      id: 2,
-      type: "data",
-      description: "Airtel Data Bundle",
-      amount: "₦2,500",
-      date: "May 1, 2023",
-      time: "3:15 PM",
-      status: "success",
-      reference: "BVTU987654321",
-      recipient: "09087654321",
-      provider: "Airtel",
-      paymentMethod: "Wallet",
-    },
-    {
-      id: 3,
-      type: "cable",
-      description: "DSTV Subscription",
-      amount: "₦24,500",
-      date: "April 28, 2023",
-      time: "9:00 AM",
-      status: "success",
-      reference: "BVTU456789123",
-      recipient: "12345678901",
-      provider: "DSTV",
-      paymentMethod: "Wallet",
-    },
-    {
-      id: 4,
-      type: "electricity",
-      description: "EKEDC Electricity Token",
-      amount: "₦10,000",
-      date: "April 25, 2023",
-      time: "11:45 AM",
-      status: "success",
-      reference: "BVTU789123456",
-      recipient: "45678901234",
-      provider: "EKEDC",
-      paymentMethod: "Wallet",
-    },
-    {
-      id: 5,
-      type: "wallet_funding",
-      description: "Wallet Funding",
-      amount: "₦50,000",
-      date: "April 20, 2023",
-      time: "2:30 PM",
-      status: "success",
-      reference: "BVTU234567891",
-      paymentMethod: "Bank Transfer",
-    },
-    {
-      id: 6,
-      type: "wallet_transfer",
-      description: "Wallet Transfer",
-      amount: "₦15,000",
-      date: "April 18, 2023",
-      time: "5:45 PM",
-      status: "success",
-      reference: "BVTU345678912",
-      recipient: "john@example.com",
-      paymentMethod: "Wallet",
-    },
-    {
-      id: 7,
-      type: "data",
-      description: "Glo Data Bundle",
-      amount: "₦3,500",
-      date: "April 15, 2023",
-      time: "8:20 AM",
-      status: "failed",
-      reference: "BVTU456789123",
-      recipient: "08034567890",
-      provider: "Glo",
-      paymentMethod: "Wallet",
-    },
-    {
-      id: 8,
-      type: "exam_card",
-      description: "WAEC Exam Card",
-      amount: "₦3,500",
-      date: "April 10, 2023",
-      time: "1:15 PM",
-      status: "success",
-      reference: "BVTU567891234",
-      recipient: "example@gmail.com",
-      provider: "WAEC",
-      paymentMethod: "Wallet",
-    },
-    {
-      id: 9,
-      type: "recharge_card",
-      description: "9mobile Recharge Card Printing",
-      amount: "₦5,000",
-      date: "April 5, 2023",
-      time: "4:30 PM",
-      status: "success",
-      reference: "BVTU678912345",
-      provider: "9mobile",
-      paymentMethod: "Wallet",
-    },
-    {
-      id: 10,
-      type: "referral_bonus",
-      description: "Referral Bonus",
-      amount: "₦2,500",
-      date: "April 1, 2023",
-      time: "9:45 AM",
-      status: "success",
-      reference: "BVTU789123456",
-      paymentMethod: "System",
-    },
-  ]
-
-  // Filter transactions based on search query and filters
+  // Filter transactions based on search query
   const filteredTransactions = transactions.filter((transaction) => {
     // Search filter
     const searchMatch =
@@ -182,30 +110,7 @@ export default function TransactionsPage() {
       transaction.reference.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (transaction.recipient && transaction.recipient.toLowerCase().includes(searchQuery.toLowerCase()))
 
-    // Status filter
-    const statusMatch = statusFilter === "all" || transaction.status === statusFilter
-
-    // Type filter
-    const typeMatch = typeFilter === "all" || transaction.type === typeFilter
-
-    // Date filter (simplified for demo)
-    let dateMatch = true
-    const today = new Date()
-    const transactionDate = new Date(transaction.date)
-
-    if (dateFilter === "today") {
-      dateMatch = transactionDate.toDateString() === today.toDateString()
-    } else if (dateFilter === "week") {
-      const weekAgo = new Date()
-      weekAgo.setDate(today.getDate() - 7)
-      dateMatch = transactionDate >= weekAgo
-    } else if (dateFilter === "month") {
-      const monthAgo = new Date()
-      monthAgo.setMonth(today.getMonth() - 1)
-      dateMatch = transactionDate >= monthAgo
-    }
-
-    return searchMatch && statusMatch && typeMatch && dateMatch
+    return searchMatch
   })
 
   const handleViewTransaction = (transaction: Transaction) => {
@@ -224,6 +129,7 @@ export default function TransactionsPage() {
       case "electricity":
         return <Zap className="h-5 w-5 text-yellow-600" />
       case "wallet_funding":
+      case "payment":
         return <ArrowUpRight className="h-5 w-5 text-green-600" />
       case "wallet_transfer":
         return <ArrowDownLeft className="h-5 w-5 text-red-600" />
@@ -267,7 +173,7 @@ export default function TransactionsPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
-        <Button variant="outline">
+        <Button variant="outline" aria-label="Export transaction data">
           <Download className="mr-2 h-4 w-4" /> Export
         </Button>
       </div>
@@ -329,7 +235,7 @@ export default function TransactionsPage() {
                   <SelectItem value="month">This Month</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" aria-label="More filters">
                 <Filter className="h-4 w-4" />
                 <span className="sr-only">More filters</span>
               </Button>
@@ -342,15 +248,35 @@ export default function TransactionsPage() {
                 <TableRow>
                   <TableHead>Type</TableHead>
                   <TableHead>Description</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead className="hidden sm:table-cell">Date</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Reference</TableHead>
+                  <TableHead className="hidden md:table-cell">Reference</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTransactions.length > 0 ? (
+                {loading ? (
+                  // Show skeleton rows while loading
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-8 w-8 rounded-full" />
+                          <Skeleton className="h-4 w-20" />
+                        </div>
+                      </TableCell>
+                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                      <TableCell className="text-right">
+                        <Skeleton className="h-8 w-8 rounded" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : filteredTransactions.length > 0 ? (
                   filteredTransactions.map((transaction) => (
                     <TableRow key={transaction.id}>
                       <TableCell>
@@ -362,7 +288,7 @@ export default function TransactionsPage() {
                         </div>
                       </TableCell>
                       <TableCell>{transaction.description}</TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <div className="flex flex-col">
                           <span>{transaction.date}</span>
                           <span className="text-xs text-muted-foreground">{transaction.time}</span>
@@ -386,7 +312,7 @@ export default function TransactionsPage() {
                               : "Failed"}
                         </span>
                       </TableCell>
-                      <TableCell className="font-mono text-xs">{transaction.reference}</TableCell>
+                      <TableCell className="hidden md:table-cell font-mono text-xs">{transaction.reference}</TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"
@@ -494,7 +420,7 @@ export default function TransactionsPage() {
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Close
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" aria-label="Download transaction receipt">
                   <Download className="mr-2 h-4 w-4" /> Download Receipt
                 </Button>
               </div>

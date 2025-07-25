@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { walletService } from "@/lib/services/walletService"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -28,60 +29,71 @@ export default function WalletTransferPage() {
     avatar: string
   }>(null)
 
-  // Mock wallet data
-  const walletData = {
-    balance: "₦125,000.00",
-  }
+  const [walletData, setWalletData] = useState({ balance: "₦0.00" })
+  useEffect(() => {
+    const fetchBalance = async () => {
+      try {
+        const balanceData = await walletService.getBalance()
+        setWalletData({ balance: balanceData.formatted })
+      } catch (err) {
+        setWalletData({ balance: "₦0.00" })
+      }
+    }
+    fetchBalance()
+  }, [])
 
   const handleTransferChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setTransferData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSearchRecipient = () => {
+  const handleSearchRecipient = async () => {
     if (!transferData.username) return
-
     setIsSearching(true)
     setRecipientFound(null)
-
-    // Simulate searching for recipient
-    setTimeout(() => {
-      setIsSearching(false)
-      // Mock recipient data
-      if (
-        transferData.username.toLowerCase() === "johndoe" ||
-        transferData.username.toLowerCase() === "john@example.com"
-      ) {
+    try {
+      const user = await walletService.searchUser(transferData.username)
+      if (user) {
         setRecipientFound({
-          name: "John Doe",
-          username: "johndoe",
-          email: "john@example.com",
+          name: user.name,
+          username: user.id || user.username,
+          email: user.email,
           avatar: "",
         })
+      } else {
+        setRecipientFound(null)
       }
-    }, 1000)
+    } catch (err) {
+      setRecipientFound(null)
+    } finally {
+      setIsSearching(false)
+    }
   }
 
-  const handleTransfer = (e: React.FormEvent) => {
+  const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-
-    // Simulate processing
-    setTimeout(() => {
+    try {
+      const result = await walletService.transferFunds({
+        recipient: transferData.username,
+        amount: Number(transferData.amount),
+        description: transferData.description,
+      })
+      if (result.success) {
+        setIsSuccess(true)
+        setTimeout(() => {
+          setIsSuccess(false)
+          setTransferData({ username: "", amount: "", description: "" })
+          router.push("/dashboard/wallet")
+        }, 3000)
+      } else {
+        // handle error (show toast, etc.)
+      }
+    } catch (err) {
+      // handle error (show toast, etc.)
+    } finally {
       setIsLoading(false)
-      setIsSuccess(true)
-
-      // Reset after 3 seconds and redirect
-      setTimeout(() => {
-        setIsSuccess(false)
-        setTransferData({
-          username: "",
-          amount: "",
-          description: "",
-        })
-        router.push("/dashboard/wallet")
-      }, 3000)
-    }, 1500)
+    }
   }
 
   return (

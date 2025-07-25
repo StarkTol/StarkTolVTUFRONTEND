@@ -1,8 +1,9 @@
 "use client"
 
-import React, { createContext, useContext, useEffect, useState } from "react"
+import React, { createContext, useContext, useEffect, useState, useRef } from "react"
 import { useAuth } from "./authContext"
 import api from "@/lib/api"
+import { supabase } from "@/lib/supabaseClient"
 
 interface UserData {
   profile: {
@@ -29,6 +30,8 @@ interface UserData {
 interface UserDataContextType extends UserData {
   refreshUserData: () => Promise<void>
   refreshTransactions: () => Promise<void>
+  updateWalletBalance: (newBalance: number) => void
+  isBalanceLoading: boolean
 }
 
 const UserDataContext = createContext<UserDataContextType | undefined>(undefined)
@@ -44,6 +47,8 @@ export const UserDataProvider = ({ children }: { children: React.ReactNode }) =>
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isBalanceLoading, setIsBalanceLoading] = useState(false)
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const refreshUserData = async () => {
     if (!isAuthenticated || !user) {
@@ -159,9 +164,103 @@ export const UserDataProvider = ({ children }: { children: React.ReactNode }) =>
     }
   }
 
+  // Function to update wallet balance in profile
+  const updateWalletBalance = (newBalance: number) => {
+    setProfile(prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        wallet_balance: newBalance
+      }
+    })
+    console.log("💰 [UserData] Wallet balance updated:", newBalance)
+  }
+
+  // Function to fetch wallet balance from API
+  const fetchWalletBalance = async () => {
+    if (!isAuthenticated || !user) return
+
+    try {
+      setIsBalanceLoading(true)
+      console.log("🔄 [UserData] Fetching wallet balance...")
+      const response = await api.get("/wallet/balance")
+      const balance = response.data?.balance || response.data?.data?.balance || 0
+      updateWalletBalance(balance)
+      console.log("✅ [UserData] Balance fetched:", balance)
+    } catch (err: any) {
+      console.warn("⚠️ [UserData] Failed to fetch wallet balance:", err.message)
+    } finally {
+      setIsBalanceLoading(false)
+    }
+  }
+
+  // Setup polling fallback if realtime subscription fails
+  const setupBalancePolling = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current)
+    }
+    
+    console.log("⚡ [UserData] Setting up wallet balance polling (10s interval)")
+    pollingIntervalRef.current = setInterval(() => {
+      fetchWalletBalance()
+    }, 10000) // Poll every 10 seconds
+  }
+
+  // Cleanup polling
+  const cleanupBalancePolling = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current)
+      pollingIntervalRef.current = null
+      console.log("🛑 [UserData] Wallet balance polling stopped")
+    }
+  }
+
   useEffect(() => {
-    refreshUserData()
-  }, [user, isAuthenticated])
+    refreshUserData();
+
+    if (!user || !isAuthenticated) return;
+
+    // Subscribe to wallet balance changes for this user
+    const walletSub = supabase
+      .channel('wallet-balance')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'wallets',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          // Refresh user data when wallet changes
+          refreshUserData();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to new notifications for this user
+    const notifSub = supabase
+      .channel('user-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          // Optionally, you can refresh notifications or show a toast here
+          refreshUserData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(walletSub);
+      supabase.removeChannel(notifSub);
+    };
+  }, [user, isAuthenticated]);
 
   return (
     <UserDataContext.Provider

@@ -37,9 +37,11 @@ import {
   Gift,
   BookOpen,
 } from "lucide-react"
+import { useElectricityMenuVisibility } from "./useElectricityMenuVisibility"
 
 export function DashboardSidebar() {
   const pathname = usePathname()
+  const showElectricity = useElectricityMenuVisibility()
 
   const isActive = (path: string) => {
     return pathname === path
@@ -62,7 +64,7 @@ export function DashboardSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard")}>
+                <SidebarMenuButton asChild isActive={isActive("/dashboard")}> 
                   <Link href="/dashboard">
                     <Home />
                     <span>Dashboard</span>
@@ -78,7 +80,7 @@ export function DashboardSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/airtime")}>
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/airtime")}> 
                   <Link href="/dashboard/airtime">
                     <Phone />
                     <span>Airtime</span>
@@ -87,7 +89,7 @@ export function DashboardSidebar() {
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/data")}>
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/data")}> 
                   <Link href="/dashboard/data">
                     <Wifi />
                     <span>Data</span>
@@ -96,7 +98,7 @@ export function DashboardSidebar() {
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/cable")}>
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/cable")}> 
                   <Link href="/dashboard/cable">
                     <Tv />
                     <span>Cable TV</span>
@@ -104,17 +106,19 @@ export function DashboardSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/electricity")}>
-                  <Link href="/dashboard/electricity">
-                    <Zap />
-                    <span>Electricity</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {showElectricity && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={isActive("/dashboard/electricity")}> 
+                    <Link href="/dashboard/electricity">
+                      <Zap />
+                      <span>Electricity</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
 
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/dashboard/exam-cards")}>
+                <SidebarMenuButton asChild isActive={isActive("/dashboard/exam-cards")}> 
                   <Link href="/dashboard/exam-cards">
                     <BookOpen />
                     <span>Exam Cards</span>

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,65 +23,12 @@ export default function SupportPage() {
     category: "general",
   })
 
-  // Mock FAQ data
-  const faqs = [
-    {
-      id: 1,
-      question: "How do I fund my wallet?",
-      answer:
-        "You can fund your wallet through bank transfer, card payment, or USSD. Go to the Wallet page and click on 'Fund Wallet' to see all available options.",
-      category: "wallet",
-    },
-    {
-      id: 2,
-      question: "How long does it take for a transaction to be processed?",
-      answer:
-        "Most transactions are processed instantly. However, in rare cases, it might take up to 5 minutes due to network issues. If your transaction is not completed after 5 minutes, please contact our support team.",
-      category: "transactions",
-    },
-    {
-      id: 3,
-      question: "How do I become a reseller?",
-      answer:
-        "To become a reseller, go to your dashboard and click on the 'Reseller' section. Follow the instructions to set up your reseller account. You'll need to provide some basic information and agree to our reseller terms and conditions.",
-      category: "reseller",
-    },
-    {
-      id: 4,
-      question: "What is the minimum amount I can transfer to another user?",
-      answer:
-        "The minimum amount you can transfer to another Babs VTU user is ₦100. There is also a maximum limit of ₦100,000 per transaction for security reasons.",
-      category: "wallet",
-    },
-    {
-      id: 5,
-      question: "How do I check my transaction history?",
-      answer:
-        "You can view your transaction history by going to the 'Transactions' page from your dashboard. You can also filter transactions by date, type, and status.",
-      category: "transactions",
-    },
-    {
-      id: 6,
-      question: "What should I do if my data bundle is not delivered?",
-      answer:
-        "If your data bundle is not delivered, first check your transaction status on the 'Transactions' page. If it shows as successful but you haven't received the data, please contact our support team with your transaction reference.",
-      category: "services",
-    },
-    {
-      id: 7,
-      question: "How do I earn from referrals?",
-      answer:
-        "You earn a commission whenever someone signs up using your referral link and makes a transaction. The commission rate depends on your tier level. You can find your referral link on the 'Referrals' page.",
-      category: "referrals",
-    },
-    {
-      id: 8,
-      question: "Can I customize my reseller website?",
-      answer:
-        "Yes, you can customize your reseller website by going to the 'Reseller > Website' section. You can change the colors, logo, and content to match your brand.",
-      category: "reseller",
-    },
-  ]
+  // TODO: Fetch FAQs from real API or static file
+  const [faqs, setFaqs] = useState<any[]>([])
+  useEffect(() => {
+    // Example: fetch('/api/faqs').then(res => res.json()).then(setFaqs)
+    // Replace with your real FAQ API or static file fetch
+  }, [])
 
   // Filter FAQs based on search query
   const filteredFaqs = faqs.filter((faq) => {

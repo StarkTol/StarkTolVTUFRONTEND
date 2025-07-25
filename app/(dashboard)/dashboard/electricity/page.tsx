@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { electricityService } from "@/lib/services/electricityService"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,6 +12,7 @@ import { ProviderSelector } from "@/components/dashboard/provider-selector"
 import { Loader2, CheckCircle2, Zap, Receipt } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function ElectricityPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -30,53 +32,26 @@ export default function ElectricityPage() {
     address: "",
   })
 
-  // Mock data for recent transactions
-  const recentTransactions = [
-    {
-      id: 1,
-      provider: "EKEDC",
-      meterNumber: "12345678901",
-      amount: "₦10,000",
-      date: "Today, 10:30 AM",
-      status: "success",
-      token: "1234-5678-9012-3456-7890",
-    },
-    {
-      id: 2,
-      provider: "IKEDC",
-      meterNumber: "98765432109",
-      amount: "₦5,000",
-      date: "Yesterday, 3:15 PM",
-      status: "success",
-      token: "0987-6543-2109-8765-4321",
-    },
-    {
-      id: 3,
-      provider: "AEDC",
-      meterNumber: "45678901234",
-      amount: "₦7,500",
-      date: "23/04/2023, 9:00 AM",
-      status: "failed",
-      token: "",
-    },
-    {
-      id: 4,
-      provider: "PHEDC",
-      meterNumber: "56789012345",
-      amount: "₦15,000",
-      date: "20/04/2023, 11:45 AM",
-      status: "success",
-      token: "5678-9012-3456-7890-1234",
-    },
-  ]
+  const [recentTransactions, setRecentTransactions] = useState<any[]>([])
+  useEffect(() => {
+    electricityService.getRecentTransactions(5).then(setRecentTransactions)
+  }, [])
 
-  // Mock data for providers
-  const providers = [
-    { id: "ekedc", name: "EKEDC", logo: "/ekedc.logo.jpg?height=60&width=60" },
-    { id: "ikedc", name: "IKEDC", logo: "/ie.logo.jpg?height=60&width=60" },
-    { id: "phedc", name: "PHEDC", logo: "/PHEDC.jpg?height=60&width=60" },
-    { id: "ibedc", name: "IBEDC", logo: "/ibedc.logo.jpg?height=60&width=60" },
-  ]
+  const [providers, setProviders] = useState<any[]>([])
+  const [loadingProviders, setLoadingProviders] = useState(true)
+  const [providerError, setProviderError] = useState<string | null>(null)
+  useEffect(() => {
+    setLoadingProviders(true)
+    electricityService.getProviders()
+      .then((data) => {
+        setProviders(data)
+        setLoadingProviders(false)
+      })
+      .catch(() => {
+        setProviderError("Unable to load electricity providers. This service is currently unavailable.")
+        setLoadingProviders(false)
+      })
+  }, [])
 
   const handleProviderSelect = (providerId: string) => {
     setSelectedProvider(providerId)
@@ -105,48 +80,70 @@ export default function ElectricityPage() {
     setFormData((prev) => ({ ...prev, paymentMethod: value }))
   }
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (!selectedProvider || !formData.meterNumber || !formData.meterType) return
-
     setIsVerifying(true)
-
-    // Simulate verification process
-    setTimeout(() => {
-      setIsVerifying(false)
-      setIsVerified(true)
-      setCustomerInfo({
-        name: "John Doe",
-        address: "123 Example Street, Lagos, Nigeria",
-      })
-    }, 1500)
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    // Simulate transaction processing
-    setTimeout(() => {
-      setIsLoading(false)
-      setIsSuccess(true)
-
-      // Reset form after 5 seconds
-      setTimeout(() => {
-        setIsSuccess(false)
-        setSelectedProvider(null)
+    try {
+      const info = await electricityService.validateMeter(formData.meterNumber, selectedProvider, formData.meterType as any)
+      if (info) {
+        setIsVerified(true)
+        setCustomerInfo({
+          name: info.customerName || "",
+          address: info.address || "",
+        })
+      } else {
         setIsVerified(false)
         setCustomerInfo({ name: "", address: "" })
-        setFormData({
-          meterNumber: "",
-          meterType: "",
-          amount: "",
-          phoneNumber: "",
-          paymentMethod: "wallet",
-        })
-      }, 5000)
-    }, 1500)
+      }
+    } finally {
+      setIsVerifying(false)
+    }
   }
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    try {
+      const result = await electricityService.purchaseElectricity({
+        provider: selectedProvider!,
+        meterNumber: formData.meterNumber,
+        amount: Number(formData.amount),
+        meterType: formData.meterType as any,
+        paymentMethod: formData.paymentMethod as any,
+      })
+      if (result.success) {
+        setIsSuccess(true)
+        // Optionally show token/result.data.token
+        setTimeout(() => {
+          setIsSuccess(false)
+          setSelectedProvider(null)
+          setIsVerified(false)
+          setCustomerInfo({ name: "", address: "" })
+          setFormData({
+            meterNumber: "",
+            meterType: "",
+            amount: "",
+            phoneNumber: "",
+            paymentMethod: "wallet",
+          })
+        }, 5000)
+      } else {
+        // handle error (show toast, etc.)
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (providerError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="rounded bg-red-100 text-red-700 p-4 text-center font-medium max-w-md">
+          {providerError}
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -187,11 +184,20 @@ export default function ElectricityPage() {
                   <div className="space-y-4">
                     <div>
                       <Label>Select Electricity Provider</Label>
-                      <ProviderSelector
-                        providers={providers}
-                        selectedProvider={selectedProvider}
-                        onSelect={handleProviderSelect}
-                      />
+                      {loadingProviders ? (
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          <Skeleton className="h-16 w-full" />
+                          <Skeleton className="h-16 w-full" />
+                          <Skeleton className="h-16 w-full" />
+                          <Skeleton className="h-16 w-full" />
+                        </div>
+                      ) : (
+                        <ProviderSelector
+                          providers={providers}
+                          selectedProvider={selectedProvider}
+                          onSelect={handleProviderSelect}
+                        />
+                      )}
                     </div>
 
                     <div>
@@ -322,29 +328,37 @@ export default function ElectricityPage() {
               <CardDescription>Your recent electricity purchases</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {recentTransactions.map((transaction) => (
-                  <div key={transaction.id} className="flex items-center justify-between rounded-lg border p-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 text-yellow-600">
-                        <Zap className="h-5 w-5" />
+              {loadingProviders ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentTransactions.map((transaction) => (
+                    <div key={transaction.id} className="flex items-center justify-between rounded-lg border p-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 text-yellow-600">
+                          <Zap className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="font-medium">{transaction.provider}</div>
+                          <div className="text-xs text-muted-foreground">{transaction.meterNumber}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-medium">{transaction.provider}</div>
-                        <div className="text-xs text-muted-foreground">{transaction.meterNumber}</div>
+                      <div className="text-right">
+                        <div className="font-medium">{transaction.amount}</div>
+                        <div
+                          className={`text-xs ${transaction.status === "success" ? "text-green-600" : "text-red-600"}`}
+                        >
+                          {transaction.status === "success" ? "Successful" : "Failed"}
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-medium">{transaction.amount}</div>
-                      <div
-                        className={`text-xs ${transaction.status === "success" ? "text-green-600" : "text-red-600"}`}
-                      >
-                        {transaction.status === "success" ? "Successful" : "Failed"}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
             <CardFooter>
               <Button variant="outline" size="sm" className="w-full">

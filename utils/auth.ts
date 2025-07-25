@@ -1,4 +1,17 @@
 // utils/auth.ts
+// @deprecated - This file is deprecated in favor of utils/authStorageMigation.ts
+// Please use the canonical storage helpers from authStorageMigation.ts instead
+
+import {
+  getAccessToken as getCanonicalAccessToken,
+  getRefreshToken as getCanonicalRefreshToken,
+  getUser as getCanonicalUser,
+  setAccessToken,
+  setRefreshToken,
+  setUser,
+  clearAuthData as clearCanonicalAuthData,
+  isAuthenticated as isCanonicalAuthenticated
+} from './authStorageMigation'
 
 export const ACCESS_TOKEN_KEY = "access_token"
 export const REFRESH_TOKEN_KEY = "refresh_token"
@@ -13,47 +26,63 @@ type User = {
   // Add other fields if needed
 }
 
-// Save auth info to localStorage
+// Save auth info to localStorage - now uses canonical storage
+/**
+ * @deprecated Use individual setters from authStorageMigation.ts instead
+ */
 export function saveAuthData(
   accessToken: string,
   refreshToken: string,
   user: User,
   rememberMe = false
 ) {
-  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
-  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
-  localStorage.setItem(USER_KEY, JSON.stringify(user))
+  setAccessToken(accessToken)
+  setRefreshToken(refreshToken)
+  setUser(user)
 
   if (rememberMe) {
     localStorage.setItem(REMEMBER_ME_KEY, "true")
   }
 }
 
-// Get access token
+// Get access token - now uses canonical storage
+/**
+ * @deprecated Use getAccessToken from authStorageMigation.ts instead
+ */
 export function getAccessToken(): string | null {
-  return localStorage.getItem(ACCESS_TOKEN_KEY)
+  return getCanonicalAccessToken()
 }
 
-// Get refresh token
+// Get refresh token - now uses canonical storage
+/**
+ * @deprecated Use getRefreshToken from authStorageMigation.ts instead
+ */
 export function getRefreshToken(): string | null {
-  return localStorage.getItem(REFRESH_TOKEN_KEY)
+  return getCanonicalRefreshToken()
 }
 
-// Get user
+// Get user - now uses canonical storage
+/**
+ * @deprecated Use getUser from authStorageMigation.ts instead
+ */
 export function getUser(): User | null {
-  const user = localStorage.getItem(USER_KEY)
-  return user ? JSON.parse(user) : null
+  return getCanonicalUser()
 }
 
-// Check if user is logged in
+// Check if user is logged in - now uses canonical storage
+/**
+ * @deprecated Use isAuthenticated from authStorageMigation.ts instead
+ */
 export function isLoggedIn(): boolean {
-  return !!getAccessToken()
+  return isCanonicalAuthenticated()
 }
 
-// Clear all auth data (logout)
+// Clear all auth data (logout) - now uses canonical storage
+/**
+ * @deprecated Use clearAuthData from authStorageMigation.ts instead
+ */
 export function clearAuthData() {
-  localStorage.removeItem(ACCESS_TOKEN_KEY)
-  localStorage.removeItem(REFRESH_TOKEN_KEY)
-  localStorage.removeItem(USER_KEY)
+  clearCanonicalAuthData()
+  // Also clear remember_me which is specific to this legacy implementation
   localStorage.removeItem(REMEMBER_ME_KEY)
 }

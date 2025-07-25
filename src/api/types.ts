@@ -672,3 +672,93 @@ export type RequireAtLeastOne<T, Keys extends keyof T = keyof T> =
   {
     [K in Keys]-?: Required<Pick<T, K>> & Partial<Pick<T, Exclude<Keys, K>>>
   }[Keys]
+
+// ===== Auto Refill Types =====
+
+export interface AutoRefillSchedule extends BaseEntity {
+  userId: string
+  serviceType: ServiceCategory
+  providerId: string
+  providerName: string
+  planId?: string
+  planName?: string
+  phoneNumber: string
+  amount: number
+  frequency: 'daily' | 'weekly' | 'monthly'
+  nextRunDate: string
+  status: 'active' | 'paused' | 'cancelled' | 'failed'
+  lastRunDate?: string
+  successCount: number
+  failureCount: number
+  metadata?: Record<string, any>
+}
+
+export interface CreateAutoRefillRequest {
+  serviceType: ServiceCategory
+  providerId: string
+  planId?: string
+  phoneNumber: string
+  amount: number
+  frequency: 'daily' | 'weekly' | 'monthly'
+  startDate?: string
+  metadata?: Record<string, any>
+}
+
+export interface UpdateAutoRefillRequest {
+  providerId?: string
+  planId?: string
+  phoneNumber?: string
+  amount?: number
+  frequency?: 'daily' | 'weekly' | 'monthly'
+  status?: 'active' | 'paused' | 'cancelled'
+  nextRunDate?: string
+  metadata?: Record<string, any>
+}
+
+// ===== Content Management Types =====
+
+export interface FaqCategory {
+  id: string
+  name: string
+  slug: string
+  description?: string
+  questions: FaqQuestion[]
+  isActive: boolean
+  order: number
+}
+
+export interface FaqQuestion {
+  id: string
+  question: string
+  answer: string
+  isActive: boolean
+  order: number
+}
+
+export interface TeamMember {
+  id: string
+  name: string
+  position: string
+  bio?: string
+  avatar?: string
+  socialLinks?: {
+    linkedin?: string
+    twitter?: string
+    github?: string
+  }
+  isActive: boolean
+  order: number
+}
+
+export interface ServiceMenuItem {
+  id: string
+  name: string
+  slug: string
+  icon: string
+  description: string
+  category: ServiceCategory
+  route: string
+  isActive: boolean
+  order: number
+  features?: string[]
+}

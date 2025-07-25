@@ -1,0 +1,37 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": "dstv-compact",
+      "name": "DStv Compact",
+      "providerId": "dstv",
+      "amount": 9900,
+      "validity": "30 days",
+      "description": "Access to over 120 channels including sports and movies"
+    },
+    {
+      "id": "dstv-family",
+      "name": "DStv Family",
+      "providerId": "dstv", 
+      "amount": 4200,
+      "validity": "30 days",
+      "description": "Family-friendly package with over 60 channels"
+    },
+    {
+      "id": "gotv-max",
+      "name": "GOtv Max",
+      "providerId": "gotv",
+      "amount": 4150,
+      "validity": "30 days",
+      "description": "Premium GOtv package with sports and entertainment"
+    },
+    {
+      "id": "startimes-basic",
+      "name": "StarTimes Basic",
+      "providerId": "startimes",
+      "amount": 1200,
+      "validity": "30 days",
+      "description": "Basic entertainment package"
+    }
+  ]
+}

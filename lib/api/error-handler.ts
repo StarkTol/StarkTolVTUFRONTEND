@@ -1,4 +1,4 @@
-import { toast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 
 export interface ApiError {
   message: string
@@ -50,26 +50,15 @@ export class ApiErrorHandler {
    * Show error toast with appropriate styling
    */
   private static showErrorToast(error: ApiError, customMessage?: string) {
-    const title = this.getErrorTitle(error.status)
     const description = customMessage || error.message
-
-    toast({
-      variant: 'destructive',
-      title,
-      description,
-      duration: 5000
-    })
+    toast.error(description)
   }
 
   /**
    * Show success toast
    */
   static showSuccess(message: string, title: string = 'Success') {
-    toast({
-      title,
-      description: message,
-      duration: 3000
-    })
+    toast.success(message)
   }
 
   /**

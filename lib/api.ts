@@ -1,10 +1,19 @@
 // lib/api.ts
 
 import axios, { AxiosRequestConfig } from 'axios'
+import { setupDevAuth, isDevAuth } from './dev-auth'
+import {
+  getAccessToken,
+  getRefreshToken,
+  getUser,
+  setAccessToken,
+  setRefreshToken,
+  clearAuthData
+} from '@/utils/authStorageMigation'
 
 // Create an Axios instance
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_BASE_URL || 'https://backend-066c.onrender.com/api/v1',
+  baseURL: process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -30,26 +39,33 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = []
 }
 
-// ✅ Automatically attach token from localStorage using correct key
+// ✅ Automatically attach token from localStorage on each request
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('access_token') // ✅ Correct key
+      let token = getAccessToken()
+      
+      // Set up dev auth if needed in development
+      if (!token && process.env.NODE_ENV === 'development') {
+        setupDevAuth()
+        token = getAccessToken()
+      }
+      
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
+      } else {
+        // Add clear error when token is missing for protected routes
+        const isAuthRequired = !config.url?.includes('/auth/') && !config.url?.includes('/public/')
+        if (isAuthRequired && process.env.NODE_ENV !== 'development') {
+          console.error('🚨 [API] Access token missing for protected route:', config.url)
+          throw new Error('Authentication required: Access token not found in localStorage')
+        }
       }
       
       // Add user ID to requests for server-side filtering (if available)
-      const user = localStorage.getItem('user')
-      if (user) {
-        try {
-          const userData = JSON.parse(user)
-          if (userData.id) {
-            config.headers['X-User-ID'] = userData.id
-          }
-        } catch (e) {
-          console.warn('Failed to parse user data from localStorage')
-        }
+      const user = getUser()
+      if (user && user.id) {
+        config.headers['X-User-ID'] = user.id
       }
     }
     return config
@@ -80,7 +96,7 @@ api.interceptors.response.use(
       originalRequest._retry = true
       isRefreshing = true
 
-      const refreshToken = localStorage.getItem('refresh_token')
+      const refreshToken = getRefreshToken()
       
       if (refreshToken) {
         try {
@@ -91,10 +107,10 @@ api.interceptors.response.use(
           
           const { access_token, refresh_token: newRefreshToken } = response.data
           
-          // Update tokens in localStorage
-          localStorage.setItem('access_token', access_token)
+          // Update tokens using canonical helpers
+          setAccessToken(access_token)
           if (newRefreshToken) {
-            localStorage.setItem('refresh_token', newRefreshToken)
+            setRefreshToken(newRefreshToken)
           }
           
           // Update the authorization header
@@ -109,9 +125,7 @@ api.interceptors.response.use(
           
           // Refresh failed, redirect to login
           console.error('Token refresh failed:', refreshError)
-          localStorage.removeItem('access_token')
-          localStorage.removeItem('refresh_token')
-          localStorage.removeItem('user')
+          clearAuthData()
           
           // Redirect to login page
           if (typeof window !== 'undefined') {
@@ -125,9 +139,7 @@ api.interceptors.response.use(
       } else {
         // No refresh token available, redirect to login
         console.warn('No refresh token available')
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
-        localStorage.removeItem('user')
+        clearAuthData()
         
         if (typeof window !== 'undefined') {
           window.location.href = '/login'
@@ -178,24 +190,16 @@ api.interceptors.response.use(
 export const getCurrentUserId = (): string | null => {
   if (typeof window === 'undefined') return null
   
-  const user = localStorage.getItem('user')
-  if (user) {
-    try {
-      const userData = JSON.parse(user)
-      return userData.id || null
-    } catch (e) {
-      return null
-    }
-  }
-  return null
+  const user = getUser()
+  return user?.id || null
 }
 
 // Helper function to check if user is authenticated
 export const isAuthenticated = (): boolean => {
   if (typeof window === 'undefined') return false
   
-  const token = localStorage.getItem('access_token')
-  const user = localStorage.getItem('user')
+  const token = getAccessToken()
+  const user = getUser()
   return !!(token && user)
 }
 

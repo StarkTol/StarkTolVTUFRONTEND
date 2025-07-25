@@ -2,6 +2,16 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { 
+  migrateAuthStorageKeys,
+  getAccessToken,
+  getRefreshToken,
+  getUser,
+  setAccessToken as setStoredAccessToken,
+  setRefreshToken as setStoredRefreshToken,
+  setUser as setStoredUser,
+  clearAuthData
+} from "@/utils/authStorageMigation"
 
 interface User {
   id: string
@@ -32,13 +42,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter()
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user")
-    const storedAccessToken = localStorage.getItem("access_token")
-    const storedRefreshToken = localStorage.getItem("refresh_token")
+    // Run migration first to normalize any legacy keys
+    migrateAuthStorageKeys()
+    
+    const storedUser = getUser()
+    const storedAccessToken = getAccessToken()
+    const storedRefreshToken = getRefreshToken()
 
     if (storedUser && storedAccessToken) {
       console.log("🔁 [AuthContext] Loading user from localStorage")
-      setUser(JSON.parse(storedUser))
+      setUser(storedUser)
       setAccessToken(storedAccessToken)
       setRefreshToken(storedRefreshToken)
     }
@@ -53,27 +66,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = (user: User, accessToken: string, refreshToken: string) => {
     console.log("⚡ [AuthContext] Logging in with:", user)
 
+    // Update React state
     setUser(user)
     setAccessToken(accessToken)
     setRefreshToken(refreshToken)
 
-    localStorage.setItem("user", JSON.stringify(user))
-    localStorage.setItem("access_token", accessToken)
-    localStorage.setItem("refresh_token", refreshToken)
+    // Use canonical storage helpers
+    setStoredUser(user)
+    setStoredAccessToken(accessToken)
+    setStoredRefreshToken(refreshToken)
 
     console.log("✅ [AuthContext] Login complete. user:", user)
   }
 
   const logout = () => {
-    console.log("🚪 [AuthContext] Logging out")
+    console.log("🚻 [AuthContext] Logging out")
 
+    // Clear React state  
     setUser(null)
     setAccessToken(null)
     setRefreshToken(null)
 
-    localStorage.removeItem("user")
-    localStorage.removeItem("access_token")
-    localStorage.removeItem("refresh_token")
+    // Clear localStorage using canonical helper
+    clearAuthData()
 
     router.push("/login")
   }

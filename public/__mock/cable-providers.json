@@ -1,0 +1,26 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": "dstv",
+      "name": "DSTV",
+      "code": "dstv",
+      "status": "active",
+      "logo": "/images/providers/dstv.png"
+    },
+    {
+      "id": "gotv",
+      "name": "GOtv",
+      "code": "gotv",
+      "status": "active",
+      "logo": "/images/providers/gotv.png"
+    },
+    {
+      "id": "startimes",
+      "name": "StarTimes",
+      "code": "startimes",
+      "status": "active",
+      "logo": "/images/providers/startimes.png"
+    }
+  ]
+}

@@ -69,7 +69,7 @@ class HttpClient {
 
   constructor(baseURL?: string, config?: AxiosRequestConfig) {
     this.axiosInstance = axios.create({
-      baseURL: baseURL || process.env.NEXT_PUBLIC_API_BASE_URL || 'https://backend-066c.onrender.com/api/v1',
+      baseURL: baseURL || process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000',
       timeout: 30000, // 30 seconds
       headers: {
         'Content-Type': 'application/json',

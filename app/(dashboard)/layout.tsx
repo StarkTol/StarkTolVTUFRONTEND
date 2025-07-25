@@ -8,6 +8,8 @@ import { DashboardHeader } from "@/components/dashboard/header"
 import { ModeToggle } from "@/components/mode-toggle"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import AuthGuard from "@/components/auth/AuthGuard"
+import { WalletDataProvider } from "@/context/WalletDataContext"
+import { WalletProvider } from "@/context/WalletContext"
 
 export default function DashboardLayout({
   children,
@@ -26,18 +28,22 @@ export default function DashboardLayout({
 
   return (
     <AuthGuard>
-      <SidebarProvider defaultOpen={true}>
-        <div className="flex min-h-screen flex-col">
-          <DashboardHeader />
-          <div className="flex flex-1">
-            <DashboardSidebar />
-            <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">{children}</main>
-          </div>
-          <div className="fixed bottom-4 right-4">
-            <ModeToggle />
-          </div>
-        </div>
-      </SidebarProvider>
+      <WalletDataProvider>
+        <WalletProvider>
+          <SidebarProvider defaultOpen={true}>
+            <div className="flex min-h-screen flex-col">
+              <DashboardHeader />
+              <div className="flex flex-1">
+                <DashboardSidebar />
+                <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">{children}</main>
+              </div>
+              <div className="fixed bottom-4 right-4">
+                <ModeToggle />
+              </div>
+            </div>
+          </SidebarProvider>
+        </WalletProvider>
+      </WalletDataProvider>
     </AuthGuard>
   )
 }

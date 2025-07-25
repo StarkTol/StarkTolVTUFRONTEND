@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Wallet, ArrowUpRight, ArrowDownLeft, Copy, CheckCircle2, CreditCard, Clock, BarChart3, Loader2 } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useRouter } from "next/navigation"
 import useWallet from "@/hooks/useWallet"
 
@@ -36,8 +37,8 @@ export default function WalletPage() {
     router.push("/dashboard/wallet/transactions")
   }
 
-  // Show loading state
-  if (loading) {
+  // Show loading state with skeleton when walletData is null and no error
+  if (walletData === null && !error) {
     return (
       <div className="space-y-8">
         <div className="flex items-center justify-between">
@@ -45,19 +46,55 @@ export default function WalletPage() {
         </div>
         <div className="grid gap-8 md:grid-cols-3">
           <Card className="md:col-span-2">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-center h-40">
-                <Loader2 className="h-8 w-8 animate-spin" />
+            <CardHeader className="pb-2">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-48" />
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6 rounded-lg border p-6">
+                <Skeleton className="h-4 w-28 mb-2" />
+                <Skeleton className="h-8 w-32 mb-4" />
+              </div>
+              <div className="rounded-lg border p-4">
+                <Skeleton className="h-5 w-32 mb-4" />
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-28" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                </div>
               </div>
             </CardContent>
+            <CardFooter>
+              <div className="flex w-full flex-col gap-2 sm:flex-row">
+                <Skeleton className="h-10 flex-1" />
+                <Skeleton className="h-10 flex-1" />
+              </div>
+            </CardFooter>
           </Card>
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-center h-40">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
+            <CardHeader>
+              <Skeleton className="h-6 w-28" />
+              <Skeleton className="h-4 w-32" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
             </CardContent>
           </Card>
+        </div>
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-64 w-full" />
         </div>
       </div>
     )
@@ -165,8 +202,8 @@ export default function WalletPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="transactions">Recent Transactions</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
         </TabsList>
         <TabsContent value="overview">
           <Card>
@@ -213,10 +250,10 @@ export default function WalletPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="transactions">
+        <TabsContent value="history">
           <Card>
             <CardHeader>
-              <CardTitle>Recent Transactions</CardTitle>
+              <CardTitle>Transaction History</CardTitle>
               <CardDescription>Your recent wallet activities</CardDescription>
             </CardHeader>
             <CardContent>
@@ -260,24 +297,24 @@ export default function WalletPage() {
             </CardFooter>
           </Card>
         </TabsContent>
-        <TabsContent value="analytics">
+        <TabsContent value="withdrawals">
           <Card>
             <CardHeader>
-              <CardTitle>Spending Analytics</CardTitle>
-              <CardDescription>Analyze your spending patterns</CardDescription>
+              <CardTitle>Withdrawals</CardTitle>
+              <CardDescription>Manage your wallet withdrawals</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between rounded-lg border p-4">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <BarChart3 className="h-5 w-5" />
+                    <ArrowDownLeft className="h-5 w-5" />
                   </div>
                   <div>
-                    <div className="font-medium">Monthly Spending Report</div>
-                    <div className="text-sm text-muted-foreground">View your spending patterns</div>
+                    <div className="font-medium">Bank Transfer</div>
+                    <div className="text-sm text-muted-foreground">Transfer funds to your bank account</div>
                   </div>
                 </div>
-                <Button variant="outline">View Report</Button>
+                <Button variant="outline" onClick={navigateToTransfer}>Transfer</Button>
               </div>
               <div className="flex items-center justify-between rounded-lg border p-4">
                 <div className="flex items-center gap-3">
@@ -285,11 +322,11 @@ export default function WalletPage() {
                     <Clock className="h-5 w-5" />
                   </div>
                   <div>
-                    <div className="font-medium">Transaction History</div>
-                    <div className="text-sm text-muted-foreground">Download your transaction history</div>
+                    <div className="font-medium">Withdrawal History</div>
+                    <div className="text-sm text-muted-foreground">View your withdrawal transactions</div>
                   </div>
                 </div>
-                <Button variant="outline">Download</Button>
+                <Button variant="outline" onClick={navigateToTransactions}>View History</Button>
               </div>
             </CardContent>
           </Card>

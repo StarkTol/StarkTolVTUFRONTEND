@@ -243,7 +243,7 @@ export default function WalletTransactionsPage() {
                 <CalendarComponent mode="single" selected={date} onSelect={setDate} initialFocus />
               </PopoverContent>
             </Popover>
-            <Button variant="outline" onClick={handleExportTransactions}>
+            <Button variant="outline" onClick={handleExportTransactions} aria-label="Export wallet transactions">
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
@@ -305,7 +305,7 @@ export default function WalletTransactionsPage() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={() => handleViewTransaction(transaction)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleViewTransaction(transaction)} aria-label="View transaction details">
                           View
                         </Button>
                       </TableCell>
