@@ -84,12 +84,12 @@ export default function ElectricityPage() {
     if (!selectedProvider || !formData.meterNumber || !formData.meterType) return
     setIsVerifying(true)
     try {
-      const info = await electricityService.validateMeter(formData.meterNumber, selectedProvider, formData.meterType as any)
-      if (info) {
+      const result = await electricityService.validateMeter(formData.meterNumber, selectedProvider, formData.meterType as any)
+      if (result.valid && result.customer) {
         setIsVerified(true)
         setCustomerInfo({
-          name: info.customerName || "",
-          address: info.address || "",
+          name: result.customer.name || "",
+          address: result.customer.address || "",
         })
       } else {
         setIsVerified(false)
