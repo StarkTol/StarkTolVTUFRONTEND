@@ -27,7 +27,7 @@ interface AuthContextType {
   refreshToken: string | null
   isAuthenticated: boolean
   loading: boolean
-  login: (user: User, accessToken: string, refreshToken: string) => void
+  login: (user: User, accessToken: string, refreshToken: string, rememberMe?: boolean) => Promise<void>
   logout: () => void
 }
 
@@ -63,20 +63,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, 0)
   }, [])
 
-  const login = (user: User, accessToken: string, refreshToken: string) => {
+  const login = async (user: User, accessToken: string, refreshToken: string, rememberMe = true): Promise<void> => {
     console.log("⚡ [AuthContext] Logging in with:", user)
+
+    // Determine storage type based on remember me
+    const useSessionStorage = !rememberMe
 
     // Update React state
     setUser(user)
     setAccessToken(accessToken)
     setRefreshToken(refreshToken)
 
-    // Use canonical storage helpers
-    setStoredUser(user)
-    setStoredAccessToken(accessToken)
-    setStoredRefreshToken(refreshToken)
+    // Use canonical storage helpers with appropriate storage type
+    setStoredUser(user, useSessionStorage)
+    setStoredAccessToken(accessToken, useSessionStorage)
+    setStoredRefreshToken(refreshToken, useSessionStorage)
 
-    console.log("✅ [AuthContext] Login complete. user:", user)
+    console.log(`✅ [AuthContext] Login complete. Storage: ${useSessionStorage ? 'sessionStorage' : 'localStorage'}. User:`, user)
+
+    // Wait for next tick to ensure state updates are processed
+    await new Promise(resolve => setTimeout(resolve, 0))
   }
 
   const logout = () => {

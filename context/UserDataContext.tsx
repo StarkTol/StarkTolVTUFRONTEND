@@ -101,18 +101,27 @@ export const UserDataProvider = ({ children }: { children: React.ReactNode }) =>
       const profileUserId = profileData?.id || profileData?.user_id || profileData?.userId
       const authUserId = user.id || user.user_id || user.userId
       
-      // TEMPORARILY DISABLED: Skip validation entirely for now
-      console.log("🔧 [UserData] VALIDATION TEMPORARILY DISABLED - Dashboard will work with any user data")
-      console.log("🔍 [UserData] User validation would check:", {
-        authUserId: user.id,
-        profileUserId: profileData?.id,
-        authEmail: user.email,
-        profileEmail: profileData?.email,
-        wouldMatch: (profileData?.id === user.id) || (profileData?.email === user.email)
-      })
+      // Validate user ownership - check both ID and email
+      const userMatches = (
+        (profileUserId && authUserId && profileUserId.toString() === authUserId.toString()) ||
+        (profileData?.email && user.email && profileData.email.toLowerCase() === user.email.toLowerCase())
+      )
       
-      // TODO: Re-enable validation after debugging
-      // This allows dashboard to work while we identify the ID mismatch issue
+      if (!userMatches && profileData) {
+        console.warn("🚨 [UserData] Profile data doesn't match authenticated user!", {
+          expectedUserId: authUserId,
+          receivedUserId: profileUserId,
+          expectedEmail: user.email,
+          receivedEmail: profileData.email
+        })
+        
+        // In development, log but continue; in production, this should be an error
+        if (process.env.NODE_ENV === 'production') {
+          throw new Error('User data validation failed: Profile data does not belong to authenticated user')
+        }
+      }
+      
+      console.log("✅ [UserData] User validation passed")
 
       // Fetch transactions (optional)
       let transactionsList = []
@@ -272,6 +281,8 @@ export const UserDataProvider = ({ children }: { children: React.ReactNode }) =>
         error,
         refreshUserData,
         refreshTransactions,
+        updateWalletBalance,
+        isBalanceLoading,
       }}
     >
       {children}

@@ -2,6 +2,7 @@
 
 import axios, { AxiosRequestConfig } from 'axios'
 import { setupDevAuth, isDevAuth } from './dev-auth'
+import { getApiBaseUrl, getEnvironmentConfig, validateEnvironmentConfig } from './config/environment'
 import {
   getAccessToken,
   getRefreshToken,
@@ -11,9 +12,25 @@ import {
   clearAuthData
 } from '@/utils/authStorageMigation'
 
-// Create an Axios instance
+// Import centralized BASE_URL configuration
+import { BASE_URL, API_ENDPOINTS, buildApiUrl } from './config/base-url'
+
+// Keep these constants for backward compatibility and alternative backend logic
+const LOCAL_BACKEND = API_ENDPOINTS.LOCAL;
+const PROD_BACKEND = API_ENDPOINTS.PRODUCTION;
+
+// Validate environment configuration
+const envValidation = validateEnvironmentConfig()
+if (!envValidation.isValid) {
+  console.error('❌ [API] Environment configuration errors:', envValidation.errors)
+}
+
+// Get environment config
+const envConfig = getEnvironmentConfig()
+
+// Create an Axios instance with auto-detected configuration
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8000',
+  baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -21,7 +38,8 @@ const api = axios.create({
   withCredentials: false, // Don't send cookies for CORS
 })
 
-console.log('🔧 [API] Base URL:', api.defaults.baseURL)
+console.log('🔧 [API] Auto-detected Base URL:', api.defaults.baseURL)
+console.log('🔧 [API] Hostname:', typeof window !== 'undefined' ? window.location.hostname : 'SSR')
 
 // Flag to prevent multiple refresh attempts
 let isRefreshing = false
@@ -73,7 +91,44 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// ✅ Enhanced error handling with token refresh
+// Helper function to retry with alternative backend URL
+async function retryWithAlternativeBackend(originalRequest: any, error: any): Promise<any> {
+  // Don't retry if this is already a retry attempt
+  if (originalRequest._backendRetried) {
+    return Promise.reject(error)
+  }
+  
+  // Check if this is a network error or 5xx server error
+  const isRetryableError = !error.response || (error.response.status >= 500)
+  if (!isRetryableError) {
+    return Promise.reject(error)
+  }
+  
+  // Determine alternative URL
+  const currentBaseURL = originalRequest.baseURL || api.defaults.baseURL
+  const alternativeURL = currentBaseURL === LOCAL_BACKEND ? PROD_BACKEND : LOCAL_BACKEND
+  
+  console.log(`🔄 [API] Retrying with alternative backend: ${currentBaseURL} -> ${alternativeURL}`)
+  
+  // Mark this request as retried
+  originalRequest._backendRetried = true
+  originalRequest.baseURL = alternativeURL
+  
+  try {
+    const response = await axios(originalRequest)
+    console.log(`✅ [API] Alternative backend succeeded: ${alternativeURL}`)
+    
+    // Update the main API instance to use the working URL
+    api.defaults.baseURL = alternativeURL
+    
+    return response
+  } catch (retryError) {
+    console.error(`❌ [API] Alternative backend also failed: ${alternativeURL}`, retryError)
+    return Promise.reject(error) // Return original error
+  }
+}
+
+// ✅ Enhanced error handling with token refresh and backend retry
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -149,6 +204,20 @@ api.interceptors.response.use(
       }
     }
 
+    // Try alternative backend for network errors and 5xx errors
+    const shouldRetryWithAlternativeBackend = (
+      !error.response || // Network error
+      (error.response.status >= 500) // Server error
+    ) && !originalRequest._backendRetried
+    
+    if (shouldRetryWithAlternativeBackend) {
+      try {
+        return await retryWithAlternativeBackend(originalRequest, error)
+      } catch (retryError) {
+        // Continue with normal error handling if retry fails
+      }
+    }
+
     // For other errors, just log and reject with comprehensive details
     console.error('🚨 [API] FULL ERROR OBJECT:', error)
     console.error('🚨 [API] ERROR RESPONSE:', error.response)
@@ -202,6 +271,34 @@ export const isAuthenticated = (): boolean => {
   const user = getUser()
   return !!(token && user)
 }
+
+// Utility function for making API calls with automatic retry
+export const apiCall = async (config: AxiosRequestConfig) => {
+  return await api(config)
+}
+
+// Utility function for GET requests with retry
+export const apiGet = async (url: string, config?: AxiosRequestConfig) => {
+  return await api.get(url, config)
+}
+
+// Utility function for POST requests with retry
+export const apiPost = async (url: string, data?: any, config?: AxiosRequestConfig) => {
+  return await api.post(url, data, config)
+}
+
+// Utility function for PUT requests with retry
+export const apiPut = async (url: string, data?: any, config?: AxiosRequestConfig) => {
+  return await api.put(url, data, config)
+}
+
+// Utility function for DELETE requests with retry
+export const apiDelete = async (url: string, config?: AxiosRequestConfig) => {
+  return await api.delete(url, config)
+}
+
+// Export the current base URL for reference
+export { BASE_URL, LOCAL_BACKEND, PROD_BACKEND }
 
 export default api
 

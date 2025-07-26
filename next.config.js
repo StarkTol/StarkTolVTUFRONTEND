@@ -9,7 +9,7 @@ const nextConfig = {
   },
 
   images: {
-    domains: ['backend-066c.onrender.com'],
+    domains: ['backend-066c.onrender.com', 'localhost'],
   },
 
   experimental: {
@@ -18,7 +18,12 @@ const nextConfig = {
   },
 
   env: {
+    // Smart API configuration with auto-detection
     NEXT_PUBLIC_API_BASE: process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000',
+    NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8000/api/v1',
+    NEXT_PUBLIC_FALLBACK_API_BASE: process.env.NEXT_PUBLIC_FALLBACK_API_BASE || 'https://backend-066c.onrender.com',
+    NEXT_PUBLIC_FALLBACK_BASE_URL: process.env.NEXT_PUBLIC_FALLBACK_BASE_URL || 'https://backend-066c.onrender.com/api/v1',
+    NEXT_PUBLIC_AUTO_DETECT_BACKEND: process.env.NEXT_PUBLIC_AUTO_DETECT_BACKEND || 'true',
   },
 
   async headers() {

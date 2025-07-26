@@ -9,7 +9,16 @@
     "start": "next start",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "e2e:dev": "start-server-and-test dev http://localhost:3000 cypress:open",
+    "e2e:headless": "start-server-and-test dev http://localhost:3000 cypress:run",
+    "switch-env": "node scripts/switch-env.js",
+    "env:local": "node scripts/switch-env.js local",
+    "env:prod": "node scripts/switch-env.js prod",
+    "env:status": "node scripts/switch-env.js status",
+    "quick-start": "node scripts/quick-start.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

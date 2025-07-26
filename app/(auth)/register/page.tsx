@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -25,12 +25,16 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const [formData, setFormData] = useState({
-    full_name: "",
+    first_name: "",
+    last_name: "",
     email: "",
     phone: "",
     password: "",
+    confirm_password: "",
     agreeTerms: false,
   })
+  const [emailCheckResult, setEmailCheckResult] = useState<string | null>(null)
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -45,14 +49,69 @@ export default function RegisterPage() {
     setFormData((prev) => ({ ...prev, agreeTerms: checked }))
   }
 
+  // Debounced email check function
+  const checkEmailAvailability = useCallback(async (email: string) => {
+    if (!email || email.length < 5) {
+      setEmailCheckResult(null)
+      return
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setEmailCheckResult(null)
+      return
+    }
+
+    setIsCheckingEmail(true)
+    setEmailCheckResult(null)
+
+    try {
+      const response = await api.get(`/auth/check-email?email=${encodeURIComponent(email.toLowerCase())}`)
+      
+      if (response.data.available === false) {
+        setEmailCheckResult("This email is already registered. Please use a different email.")
+      } else {
+        setEmailCheckResult("✓ Email is available")
+      }
+    } catch (err: any) {
+      console.error("Email check failed:", err)
+      // If endpoint doesn't exist, don't block registration but clear the result
+      if (err.response?.status === 404) {
+        console.log("Email check endpoint not available, proceeding without validation")
+      }
+      setEmailCheckResult(null)
+    } finally {
+      setIsCheckingEmail(false)
+    }
+  }, [])
+
+  // Debounce email check
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (formData.email) {
+        checkEmailAvailability(formData.email)
+      } else {
+        setEmailCheckResult(null)
+      }
+    }, 800) // 800ms delay
+
+    return () => clearTimeout(timeoutId)
+  }, [formData.email, checkEmailAvailability])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMessage("")
     setIsLoading(true)
 
     // Validate form data
-    if (!formData.full_name.trim()) {
-      setErrorMessage("Full name is required")
+    if (!formData.first_name.trim()) {
+      setErrorMessage("First name is required")
+      setIsLoading(false)
+      return
+    }
+    
+    if (!formData.last_name.trim()) {
+      setErrorMessage("Last name is required")
       setIsLoading(false)
       return
     }
@@ -91,6 +150,18 @@ export default function RegisterPage() {
       return
     }
     
+    if (!formData.confirm_password) {
+      setErrorMessage("Please confirm your password")
+      setIsLoading(false)
+      return
+    }
+    
+    if (formData.password !== formData.confirm_password) {
+      setErrorMessage("Passwords do not match")
+      setIsLoading(false)
+      return
+    }
+    
     if (!formData.agreeTerms) {
       setErrorMessage("You must agree to the terms and conditions")
       setIsLoading(false)
@@ -99,15 +170,18 @@ export default function RegisterPage() {
 
     try {
       const payload = {
-        full_name: formData.full_name.trim(),
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
         email: formData.email.trim().toLowerCase(),
-        phone: formData.phone.trim(),
+        phone_number: formData.phone.trim(),
         password: formData.password,
+        confirm_password: formData.confirm_password,
       }
 
       console.log("🚀 [Register] Submitting registration:", {
         ...payload,
-        password: "[HIDDEN]"
+        password: "[HIDDEN]",
+        confirm_password: "[HIDDEN]"
       })
 
       const response = await api.post("/auth/register", payload)
@@ -141,12 +215,23 @@ export default function RegisterPage() {
           errorMessage = err.response.data.message
         } else if (err.response.data?.error) {
           errorMessage = err.response.data.error
+        } else if (err.response.data?.errors && Array.isArray(err.response.data.errors)) {
+          // Handle validation errors array
+          const validationErrors = err.response.data.errors
+          if (validationErrors.length > 0) {
+            errorMessage = validationErrors.map((e: any) => e.message || e).join(', ')
+          }
         } else if (err.response.status === 400) {
           errorMessage = "Invalid registration data. Please check your inputs."
         } else if (err.response.status === 409) {
           errorMessage = "A user with this email already exists. Please use a different email."
         } else if (err.response.status === 422) {
-          errorMessage = "Invalid data format. Please check your inputs."
+          // Handle unprocessable entity with more specific messaging
+          if (err.response.data?.details) {
+            errorMessage = `Validation failed: ${err.response.data.details}`
+          } else {
+            errorMessage = "Invalid data format. Please check your inputs and try again."
+          }
         } else if (err.response.status >= 500) {
           errorMessage = "Server error. Please try again later."
         } else {
@@ -180,29 +265,61 @@ export default function RegisterPage() {
           <CardContent className="space-y-4">
             {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
 
-            <div className="space-y-2">
-              <Label htmlFor="full_name">Full Name</Label>
-              <Input
-                id="full_name"
-                name="full_name"
-                placeholder="John Doe"
-                required
-                value={formData.full_name}
-                onChange={handleChange}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="first_name">First Name</Label>
+                <Input
+                  id="first_name"
+                  name="first_name"
+                  placeholder="John"
+                  required
+                  value={formData.first_name}
+                  onChange={handleChange}
+                  data-testid="first_name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="last_name">Last Name</Label>
+                <Input
+                  id="last_name"
+                  name="last_name"
+                  placeholder="Doe"
+                  required
+                  value={formData.last_name}
+                  onChange={handleChange}
+                  data-testid="last_name"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-                required
-                value={formData.email}
-                onChange={handleChange}
-              />
+              <div className="relative">
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  data-testid="email"
+                />
+                {isCheckingEmail && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+              {emailCheckResult && (
+                <p className={`text-xs ${
+                  emailCheckResult.includes('✓') 
+                    ? 'text-green-600' 
+                    : 'text-red-500'
+                }`}>
+                  {emailCheckResult}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -215,6 +332,7 @@ export default function RegisterPage() {
                 required
                 value={formData.phone}
                 onChange={handleChange}
+                data-testid="phone"
               />
             </div>
 
@@ -229,6 +347,7 @@ export default function RegisterPage() {
                   required
                   value={formData.password}
                   onChange={handleChange}
+                  data-testid="password"
                 />
                 <Button
                   type="button"
@@ -248,6 +367,20 @@ export default function RegisterPage() {
                 </Button>
               </div>
             </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="confirm_password">Confirm Password</Label>
+              <Input
+                id="confirm_password"
+                name="confirm_password"
+                type="password"
+                placeholder="••••••••"
+                required
+                value={formData.confirm_password}
+                onChange={handleChange}
+                data-testid="confirm_password"
+              />
+            </div>
 
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -255,6 +388,7 @@ export default function RegisterPage() {
                 required
                 checked={formData.agreeTerms}
                 onCheckedChange={handleCheckboxChange}
+                data-testid="agree-terms"
               />
               <Label htmlFor="terms" className="text-sm">
                 I agree to the{" "}
@@ -270,7 +404,7 @@ export default function RegisterPage() {
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading} data-testid="submit-registration">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

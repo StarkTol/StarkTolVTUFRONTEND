@@ -13,7 +13,7 @@ import {
   setUser,
   clearAuthData,
   isAuthenticated
-} from '../authStorageMigation'
+} from '../utils/authStorageMigation'
 
 // Mock localStorage
 const localStorageMock = (() => {

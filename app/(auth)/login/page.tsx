@@ -64,39 +64,76 @@ export default function LoginPage() {
     setErrorMessage("")
 
     try {
+      console.log("🔐 [Login] Attempting login for:", formData.email)
+      
       const response = await api.post("/auth/login", {
-        email: formData.email,
+        email: formData.email.toLowerCase().trim(),
         password: formData.password,
       })
 
-      console.log("✅ Login API response:", response?.data)
+      console.log("✅ [Login] Login API response:", response?.data)
 
       const resData = response?.data
-      if (!resData || !resData.success || !resData.data) {
-        throw new Error(resData?.message || "Unexpected response structure")
+      if (!resData || !resData.success) {
+        throw new Error(resData?.message || "Login failed. Please check your credentials.")
       }
 
-      const { user, accessToken, refreshToken } = resData.data
-
-      console.log("👤 User:", user)
-      console.log("🎟️ AccessToken:", accessToken)
-
-      // Save in context
-      login(user, accessToken, refreshToken)
-
-      // Optional: Save remember_me
-      if (formData.rememberMe) {
-        localStorage.setItem("remember_me", "true")
+      if (!resData.data) {
+        throw new Error("Invalid response format from server")
       }
 
-      // ✅ Let the `useEffect` handle redirect after context updates
+      const { user, accessToken, refreshToken, access_token, refresh_token } = resData.data
+      
+      // Handle different response formats
+      const finalAccessToken = accessToken || access_token
+      const finalRefreshToken = refreshToken || refresh_token
+      
+      if (!user || !finalAccessToken) {
+        throw new Error("Invalid user data or access token received")
+      }
+
+      console.log("👤 [Login] User data:", {
+        id: user.id, 
+        email: user.email,
+        hasToken: !!finalAccessToken
+      })
+
+      // Save in context with remember me flag
+      await login(user, finalAccessToken, finalRefreshToken, formData.rememberMe)
+
+      console.log("🎉 [Login] Login successful, redirecting...")
+      
     } catch (err: any) {
-      console.error("❌ Login error:", err)
+      console.error("❌ [Login] Login error:", err)
+      console.error("❌ [Login] Error details:", {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data
+      })
 
-      let message = "Login failed. Try again."
-      if (err?.response?.data?.message) {
-        message = err.response.data.message
-      } else if (err?.message) {
+      let message = "Login failed. Please try again."
+      
+      if (err.response) {
+        // Server responded with error
+        const status = err.response.status
+        const errorData = err.response.data
+        
+        if (status === 401) {
+          message = "Invalid email or password. Please check your credentials."
+        } else if (status === 403) {
+          message = "Account access denied. Please contact support."
+        } else if (status === 404) {
+          message = "User not found. Please check your email address."
+        } else if (status === 429) {
+          message = "Too many login attempts. Please try again later."
+        } else if (errorData?.message) {
+          message = errorData.message
+        } else if (status >= 500) {
+          message = "Server error. Please try again later."
+        }
+      } else if (err.request) {
+        message = "Network error. Please check your internet connection."
+      } else if (err.message) {
         message = err.message
       }
 

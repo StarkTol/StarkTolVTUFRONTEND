@@ -10,6 +10,7 @@ import { SidebarProvider } from "@/components/ui/sidebar"
 import AuthGuard from "@/components/auth/AuthGuard"
 import { WalletDataProvider } from "@/context/WalletDataContext"
 import { WalletProvider } from "@/context/WalletContext"
+import AuthDebugPanel from "@/components/debug/AuthDebugPanel"
 
 export default function DashboardLayout({
   children,
@@ -40,6 +41,7 @@ export default function DashboardLayout({
               <div className="fixed bottom-4 right-4">
                 <ModeToggle />
               </div>
+              <AuthDebugPanel />
             </div>
           </SidebarProvider>
         </WalletProvider>

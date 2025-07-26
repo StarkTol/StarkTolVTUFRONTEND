@@ -279,34 +279,93 @@ export function clearAuthData(): void {
 }
 
 /**
- * API Configuration
+ * Smart API Configuration with Auto-Detection
  */
+let apiConfig: any = null
+
+export const getApiConfig = async () => {
+  if (!apiConfig) {
+    try {
+      const { getApiBase, getApiUrl } = await import('../../lib/api-config')
+      const baseUrl = await getApiBase()
+      const apiUrl = await getApiUrl()
+      
+      const { API_ENDPOINTS } = await import('../../lib/config/base-url')
+      
+      apiConfig = {
+        // Smart base URLs with auto-detection
+        BASE_URL: baseUrl,
+        API_URL: apiUrl,
+        
+        // Fallback URLs using centralized constants
+        LOCAL_URL: API_ENDPOINTS.LOCAL,
+        PRODUCTION_URL: API_ENDPOINTS.PRODUCTION,
+        
+        // Timeout settings
+        DEFAULT_TIMEOUT: 30000, // 30 seconds
+        
+        // Retry settings
+        MAX_RETRIES: 3,
+        RETRY_DELAY: 1000, // 1 second
+        
+        // Currency settings
+        DEFAULT_CURRENCY: 'NGN',
+        
+        // Pagination defaults
+        DEFAULT_PAGE_SIZE: 20,
+        MAX_PAGE_SIZE: 100,
+        
+        // Validation settings
+        MIN_AMOUNT: 50, // Minimum transaction amount
+        MAX_AMOUNT: 1000000, // Maximum transaction amount
+        
+        // Phone number settings
+        PHONE_COUNTRY_CODE: '+234',
+        
+        // Environment
+        IS_DEVELOPMENT: process.env.NODE_ENV === 'development',
+        IS_PRODUCTION: process.env.NODE_ENV === 'production',
+        AUTO_DETECT_ENABLED: process.env.NEXT_PUBLIC_AUTO_DETECT_BACKEND === 'true'
+      } as const
+      
+    } catch (error) {
+      // Fallback to static configuration
+      apiConfig = {
+        BASE_URL: process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000',
+        API_URL: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8000/api/v1',
+        LOCAL_URL: 'http://localhost:8000',
+        PRODUCTION_URL: 'https://backend-066c.onrender.com',
+        DEFAULT_TIMEOUT: 30000,
+        MAX_RETRIES: 3,
+        RETRY_DELAY: 1000,
+        DEFAULT_CURRENCY: 'NGN',
+        DEFAULT_PAGE_SIZE: 20,
+        MAX_PAGE_SIZE: 100,
+        MIN_AMOUNT: 50,
+        MAX_AMOUNT: 1000000,
+        PHONE_COUNTRY_CODE: '+234',
+        IS_DEVELOPMENT: process.env.NODE_ENV === 'development',
+        IS_PRODUCTION: process.env.NODE_ENV === 'production',
+        AUTO_DETECT_ENABLED: false
+      } as const
+    }
+  }
+  return apiConfig
+}
+
+// Static API config for backwards compatibility
 export const API_CONFIG = {
-  // Base URL (can be overridden via environment variable)
   BASE_URL: process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000',
-  
-  // Timeout settings
-  DEFAULT_TIMEOUT: 30000, // 30 seconds
-  
-  // Retry settings
+  API_URL: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8000/api/v1',
+  DEFAULT_TIMEOUT: 30000,
   MAX_RETRIES: 3,
-  RETRY_DELAY: 1000, // 1 second
-  
-  // Currency settings
+  RETRY_DELAY: 1000,
   DEFAULT_CURRENCY: 'NGN',
-  
-  // Pagination defaults
   DEFAULT_PAGE_SIZE: 20,
   MAX_PAGE_SIZE: 100,
-  
-  // Validation settings
-  MIN_AMOUNT: 50, // Minimum transaction amount
-  MAX_AMOUNT: 1000000, // Maximum transaction amount
-  
-  // Phone number settings
+  MIN_AMOUNT: 50,
+  MAX_AMOUNT: 1000000,
   PHONE_COUNTRY_CODE: '+234',
-  
-  // Environment
   IS_DEVELOPMENT: process.env.NODE_ENV === 'development',
   IS_PRODUCTION: process.env.NODE_ENV === 'production'
 } as const

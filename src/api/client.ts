@@ -53,8 +53,18 @@ export class ApiClient {
   private config: ApiClientConfig
 
   constructor(config: ApiClientConfig = {}) {
+    // Import BASE_URL dynamically to avoid circular imports
+    let defaultBaseURL = 'http://localhost:8000'
+    try {
+      const { BASE_URL } = require('../../lib/config/base-url')
+      defaultBaseURL = BASE_URL
+    } catch {
+      // Fallback to environment variable
+      defaultBaseURL = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000'
+    }
+
     this.config = {
-      baseURL: config.baseURL || process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000',
+      baseURL: config.baseURL || defaultBaseURL,
       timeout: config.timeout || 30000,
       headers: config.headers || {},
       retry: {

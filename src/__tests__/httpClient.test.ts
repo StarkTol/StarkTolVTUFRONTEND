@@ -1,12 +1,23 @@
-import axiosMock from 'axios'
+import axios from 'axios'
 import AxiosMockAdapter from 'axios-mock-adapter'
 import { httpClient } from '../api/httpClient'
+
+// Mock window.location
+const mockLocation = {
+  href: ''
+}
+
+// Delete the location property and redefine it
+delete (window as any).location
+;(window as any).location = mockLocation
 
 describe('HTTP Client', () => {
   let mock: AxiosMockAdapter
 
-  beforeAll(() => {
-    mock = new AxiosMockAdapter(axiosMock)
+  beforeEach(() => {
+    mock = new AxiosMockAdapter(axios)
+    localStorage.clear()
+    mockLocation.href = ''
   })
 
   afterEach(() => {

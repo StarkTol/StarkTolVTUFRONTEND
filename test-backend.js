@@ -1,7 +1,9 @@
 // Simple test to check if backend is running
 const axios = require('axios');
 
-const BACKEND_URL = 'https://backend-066c.onrender.com/api/v1';
+// Import centralized BASE_URL configuration
+const { API_ENDPOINTS } = require('./lib/config/base-url');
+const BACKEND_URL = `${API_ENDPOINTS.PRODUCTION}/api/v1`;
 
 async function testBackend() {
     console.log('🔍 Testing backend connectivity...');

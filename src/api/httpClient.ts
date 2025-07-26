@@ -62,12 +62,27 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
 class HttpClient {
   private axiosInstance: AxiosInstance
   private isRefreshing: boolean = false
+  private refreshPromise: Promise<string> | null = null
   private failedQueue: Array<{
     resolve: (value: string | null) => void
     reject: (error: any) => void
   }> = []
+  private refreshAttempts: number = 0
+  private readonly MAX_REFRESH_ATTEMPTS = 3
 
   constructor(baseURL?: string, config?: AxiosRequestConfig) {
+    // Use smart API configuration with auto-detection
+    const getSmartApiConfig = async () => {
+      try {
+        const { getApiBase } = await import('../../lib/api-config')
+        return await getApiBase()
+      } catch {
+        // Fallback to centralized BASE_URL
+        const { BASE_URL } = await import('../../lib/config/base-url')
+        return BASE_URL
+      }
+    }
+
     this.axiosInstance = axios.create({
       baseURL: baseURL || process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000',
       timeout: 30000, // 30 seconds
@@ -77,6 +92,18 @@ class HttpClient {
       withCredentials: false,
       ...config
     })
+
+    // Update base URL dynamically after initialization
+    if (!baseURL) {
+      getSmartApiConfig().then(url => {
+        if (url && this.axiosInstance.defaults.baseURL !== url) {
+          this.axiosInstance.defaults.baseURL = url
+          console.log('🔧 [HttpClient] Updated base URL to:', url)
+        }
+      }).catch(() => {
+        // Silent fail - use default
+      })
+    }
 
     this.setupInterceptors()
   }
@@ -147,65 +174,83 @@ class HttpClient {
     return Promise.reject(this.normalizeError(error))
   }
 
-  private async handleAuthError(
-    error: AxiosError, 
-    originalRequest: InternalAxiosRequestConfig & { _retry?: boolean }
-  ): Promise<any> {
-    if (this.isRefreshing) {
-      // Queue the request while refreshing
-      return new Promise((resolve, reject) => {
-        this.failedQueue.push({ resolve, reject })
-      }).then(token => {
-        if (token && originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${token}`
-        }
-        return this.axiosInstance(originalRequest)
-      })
+private async refreshToken(): Promise<string> {
+    // If already refreshing, return the existing promise
+    if (this.refreshPromise) {
+      return this.refreshPromise
     }
 
-    originalRequest._retry = true
+    // Check for infinite loop protection
+    if (this.refreshAttempts >= this.MAX_REFRESH_ATTEMPTS) {
+      throw new Error('Maximum refresh attempts exceeded')
+    }
+
     this.isRefreshing = true
+    this.refreshAttempts += 1
+
+    // Create the refresh promise
+    this.refreshPromise = this.performTokenRefresh()
 
     try {
-      const refreshToken = localStorage.getItem('refresh_token')
-      if (!refreshToken) {
-        throw new Error('No refresh token available')
-      }
+      const token = await this.refreshPromise
+      this.refreshAttempts = 0 // Reset on success
+      this.processFailedQueue(null, token)
+      return token
+    } catch (error) {
+      this.processFailedQueue(error, null)
+      throw error
+    } finally {
+      this.isRefreshing = false
+      this.refreshPromise = null
+    }
+  }
 
-      const response = await axios.post(
-        `${this.axiosInstance.defaults.baseURL}/auth/refresh`,
-        { refresh_token: refreshToken },
-        { skipAuthRefresh: true } as any
-      )
+  private async performTokenRefresh(): Promise<string> {
+    const refreshToken = localStorage.getItem('refresh_token')
+    if (!refreshToken) {
+      throw new Error('No refresh token available')
+    }
 
-      const { access_token, refresh_token: newRefreshToken } = response.data
+    const response = await axios.post(
+      `${this.axiosInstance.defaults.baseURL}/auth/refresh`,
+      { refresh_token: refreshToken },
+      { skipAuthRefresh: true } as any
+    )
 
-      // Update tokens
-      localStorage.setItem('access_token', access_token)
-      if (newRefreshToken) {
-        localStorage.setItem('refresh_token', newRefreshToken)
-      }
+    const { access_token, refresh_token: newRefreshToken } = response.data
 
-      // Process queued requests
-      this.processFailedQueue(null, access_token)
+    if (!access_token) {
+      throw new Error('No access token received from refresh endpoint')
+    }
 
-      // Retry original request
+    localStorage.setItem('access_token', access_token)
+    if (newRefreshToken) {
+      localStorage.setItem('refresh_token', newRefreshToken)
+    }
+
+    return access_token
+  }
+
+  private async handleAuthError(
+    error: AxiosError,
+    originalRequest: InternalAxiosRequestConfig & { _retry?: boolean }
+  ): Promise<any> {
+    // Mark request as being retried to prevent infinite loops
+    originalRequest._retry = true
+
+    try {
+      const token = await this.refreshToken()
       if (originalRequest.headers) {
-        originalRequest.headers.Authorization = `Bearer ${access_token}`
+        originalRequest.headers.Authorization = `Bearer ${token}`
       }
       return this.axiosInstance(originalRequest)
-
     } catch (refreshError) {
-      this.processFailedQueue(refreshError, null)
       this.clearAuthData()
-      
+      this.refreshAttempts = 0 // Reset on logout
       if (typeof window !== 'undefined') {
         window.location.href = '/login'
       }
-      
       return Promise.reject(this.normalizeError(refreshError as AxiosError))
-    } finally {
-      this.isRefreshing = false
     }
   }
 

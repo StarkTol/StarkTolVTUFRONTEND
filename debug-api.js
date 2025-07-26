@@ -4,7 +4,9 @@
 const testRegistration = async () => {
   console.log('🧪 Testing API registration...')
   
-  const baseURL = 'https://backend-066c.onrender.com/api/v1'
+  // Import BASE_URL from centralized configuration
+  const { API_ENDPOINTS } = require('./lib/config/base-url')
+  const baseURL = `${API_ENDPOINTS.PRODUCTION}/api/v1`
   const testData = {
     full_name: 'Test User Debug',
     email: `test${Date.now()}@example.com`,
@@ -57,7 +59,9 @@ const testApiHealth = async () => {
   console.log('🏥 Testing API health...')
   
   try {
-    const response = await fetch('https://backend-066c.onrender.com/api/v1/health', {
+    // Import BASE_URL from centralized configuration
+    const { API_ENDPOINTS } = require('./lib/config/base-url')
+    const response = await fetch(`${API_ENDPOINTS.PRODUCTION}/api/v1/health`, {
       method: 'GET',
       mode: 'cors'
     })

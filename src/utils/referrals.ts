@@ -17,7 +17,16 @@ export function generateReferralUrl(referralCode: string, baseUrl?: string): str
     return ''
   }
   
-  const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://app.starktol.com')
+  // Use centralized FRONTEND_URL configuration
+  let defaultBase = 'https://app.starktol.com'
+  try {
+    const { FRONTEND_URL } = require('../../lib/config/base-url')
+    defaultBase = FRONTEND_URL
+  } catch {
+    // Fallback to hardcoded URL if import fails
+  }
+  
+  const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin : defaultBase)
   return `${base}/register?ref=${encodeURIComponent(referralCode.trim())}`
 }
 
