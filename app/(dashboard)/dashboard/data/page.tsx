@@ -34,11 +34,17 @@ export default function DataPage() {
     paymentMethod: "wallet",
   })
 
-  // Load providers and plans on component mount
+  // Load providers on component mount
   useEffect(() => {
     loadProviders()
-    loadDataPlans()
   }, [])
+  
+  // Load data plans after providers are loaded
+  useEffect(() => {
+    if (providers.length > 0) {
+      loadDataPlans()
+    }
+  }, [providers])
 
   const loadProviders = async () => {
     try {
@@ -108,9 +114,23 @@ export default function DataPage() {
 
   const loadDataPlans = async () => {
     try {
-      const response = await vtuApi.getAllDataPlans()
-      if (response.success && response.data) {
-        setDataPlans(response.data)
+      // Load data plans for all providers
+      const allPlans: Record<string, DataPlan[]> = {}
+      
+      // For each provider, load their data plans
+      for (const provider of providers) {
+        try {
+          const response = await vtuApi.getDataPlans(provider.id)
+          if (response.success && response.data) {
+            allPlans[provider.id] = response.data
+          }
+        } catch (error) {
+          console.error(`Failed to load plans for ${provider.name}:`, error)
+        }
+      }
+      
+      if (Object.keys(allPlans).length > 0) {
+        setDataPlans(allPlans)
       } else {
         // Fallback to default plans if API fails
         setDataPlans({
@@ -409,8 +429,8 @@ export default function DataPage() {
                         <Wifi className="h-5 w-5" />
                       </div>
                       <div>
-                        <div className="font-medium">{transaction.provider || transaction.description}</div>
-                        <div className="text-xs text-muted-foreground">{transaction.phoneNumber || transaction.recipient}</div>
+                        <div className="font-medium">{transaction.description}</div>
+                        <div className="text-xs text-muted-foreground">{transaction.reference}</div>
                       </div>
                     </div>
                     <div className="text-right">
