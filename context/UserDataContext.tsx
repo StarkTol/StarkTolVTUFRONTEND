@@ -134,10 +134,19 @@ export const UserDataProvider = ({ children }: { children: React.ReactNode }) =>
       }
 
       // Fetch usage stats (optional)
-      let stats = {}
+      let stats: UserData['usageStats'] = {
+        weekly: { airtime: 0, data: 0 },
+        monthly: { airtime: 0, data: 0 },
+        yearly: { airtime: 0, data: 0 },
+      }
       try {
         const statsRes = await api.get("/stats/usage")
-        stats = statsRes.data?.data || {}
+        const apiStats = statsRes.data?.data || {}
+        stats = {
+          weekly: apiStats.weekly || { airtime: 0, data: 0 },
+          monthly: apiStats.monthly || { airtime: 0, data: 0 },
+          yearly: apiStats.yearly || { airtime: 0, data: 0 },
+        }
         console.log("✅ [UserData] Usage stats loaded:", stats)
       } catch (statsErr: any) {
         console.warn("⚠️ [UserData] Failed to load usage stats:", statsErr.response?.status, statsErr.message)
