@@ -54,7 +54,7 @@ export function DashboardHeader() {
               <Button variant="ghost" size="sm" className="gap-1">
                 <User className="h-5 w-5" />
                 <span className="hidden md:inline-flex">
-                  {profile?.first_name ? `${profile.first_name} ${profile.last_name || ''}`.trim() : profile?.username || 'User'}
+                  {profile?.full_name || profile?.email || 'User'}
                 </span>
                 <ChevronDown className="h-4 w-4" />
               </Button>

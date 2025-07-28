@@ -31,7 +31,7 @@ export default function FlutterwavePayment({ amount, disabled, onSuccess, onErro
     customer: {
       email: profile?.email || "test@example.com",
       phone_number: profile?.phone || "",
-      name: profile?.full_name || profile?.first_name || "User",
+      name: profile?.full_name || "User",
     },
     customizations: {
       title: "StarkTol VTU - Wallet Funding",
@@ -79,7 +79,7 @@ export default function FlutterwavePayment({ amount, disabled, onSuccess, onErro
         method: 'flutterwave',
         metadata: {
           email: profile?.email,
-          name: profile?.full_name || profile?.first_name || "User",
+          name: profile?.full_name || "User",
           flwRef: response.flw_ref,
           txRef: response.tx_ref,
           transactionId: response.transaction_id,

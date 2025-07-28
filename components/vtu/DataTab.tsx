@@ -81,7 +81,7 @@ export default function DataTab() {
               <SelectContent>
                 {dataPlans?.map((plan) => (
                   <SelectItem key={plan.id} value={plan.id}>
-                    {plan.name} - ₦{plan.amount}
+                    {plan.name} - ₦{plan.price}
                   </SelectItem>
                 ))}
               </SelectContent>

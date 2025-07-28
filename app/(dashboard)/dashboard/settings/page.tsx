@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,14 +10,56 @@ import { Switch } from "@/components/ui/switch"
 import { Loader2, Check, User, Lock, Bell, Shield, CreditCard } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useUserData } from "@/context/UserDataContext"
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile")
   const [isLoading, setIsLoading] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
 
-  // Use real user data from context or API
-  const { userData, setUserData } = useUserData() // Example: replace with your actual context/hook
+  // Use real user data from context
+  const { profile, loading: userDataLoading } = useUserData()
+
+  // Create a mock userData structure that matches the component's expectations
+  // This will be populated from the actual profile data or use defaults
+  const [userData, setUserData] = useState({
+    fullName: profile?.full_name || "John Doe",
+    email: profile?.email || "john.doe@example.com",
+    phone: profile?.phone || "+234 800 000 0000",
+    address: "123 Main Street, Lagos, Nigeria",
+    avatar: "",
+    notifications: {
+      email: true,
+      sms: true,
+      push: true,
+      transactionAlerts: true,
+      promotions: false,
+      newsletter: true,
+      marketing: false,
+    },
+    security: {
+      twoFactor: false,
+      loginAlerts: true,
+      transactionPin: true,
+    },
+    bankDetails: {
+      bankName: "",
+      accountNumber: "",
+      accountName: "",
+    },
+  })
+
+  // Update userData when profile data changes
+  React.useEffect(() => {
+    if (profile) {
+      setUserData(prev => ({
+        ...prev,
+        fullName: profile.full_name || prev.fullName,
+        email: profile.email || prev.email,
+        phone: profile.phone || prev.phone,
+      }))
+    }
+  }, [profile])
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target

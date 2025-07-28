@@ -11,7 +11,5 @@ export { ReferralTable } from './ReferralTable'
 export { WithdrawalDialog } from './WithdrawalDialog'
 
 // Type exports for better TypeScript integration
-export type { default as StatsCardProps } from './StatsCard'
-export type { default as ShareBoxProps } from './ShareBox'
-export type { default as ReferralTableProps } from './ReferralTable'
-export type { default as WithdrawalDialogProps } from './WithdrawalDialog'
+// Note: These components use named exports, not default exports
+// Type definitions are included with the component exports above

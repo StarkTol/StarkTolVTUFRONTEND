@@ -113,7 +113,7 @@ export default function TransactionsPage() {
     return searchMatch
   })
 
-  const handleViewTransaction = (transaction: Transaction) => {
+  const handleViewTransaction = (transaction: BaseTransaction) => {
     setSelectedTransaction(transaction)
     setIsDialogOpen(true)
   }
@@ -291,7 +291,6 @@ export default function TransactionsPage() {
                       <TableCell className="hidden sm:table-cell">
                         <div className="flex flex-col">
                           <span>{transaction.date}</span>
-                          <span className="text-xs text-muted-foreground">{transaction.time}</span>
                         </div>
                       </TableCell>
                       <TableCell className="font-medium">{transaction.amount}</TableCell>
@@ -386,7 +385,7 @@ export default function TransactionsPage() {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Date & Time</span>
                     <span>
-                      {selectedTransaction.date} at {selectedTransaction.time}
+{selectedTransaction.date}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -403,16 +402,18 @@ export default function TransactionsPage() {
                       <span>{selectedTransaction.recipient}</span>
                     </div>
                   )}
-                  {selectedTransaction.provider && (
+                  {selectedTransaction.metadata?.provider && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Provider</span>
-                      <span>{selectedTransaction.provider}</span>
+                      <span>{selectedTransaction.metadata.provider}</span>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Payment Method</span>
-                    <span>{selectedTransaction.paymentMethod}</span>
-                  </div>
+                  {selectedTransaction.metadata?.paymentMethod && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Payment Method</span>
+                      <span>{selectedTransaction.metadata.paymentMethod}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
