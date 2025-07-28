@@ -108,8 +108,25 @@ export default function DashboardPage() {
             }
             
             recentTransactions.forEach(tx => {
-              // WalletTransaction only has 'type' property, not 'category'
-              const service = tx.type
+              // WalletTransaction type is 'credit'|'debit', but we can determine service from description or metadata
+              const getServiceType = (transaction: any): string | null => {
+                // Try to extract service type from description
+                const desc = transaction.description?.toLowerCase() || ''
+                if (desc.includes('airtime')) return 'airtime'
+                if (desc.includes('data')) return 'data'
+                if (desc.includes('cable')) return 'cable'
+                if (desc.includes('electricity')) return 'electricity'
+                
+                // Try to get from metadata if available
+                const serviceType = transaction.metadata?.serviceType || transaction.metadata?.service
+                if (serviceType && ['airtime', 'data', 'cable', 'electricity'].includes(serviceType)) {
+                  return serviceType
+                }
+                
+                return null
+              }
+              
+              const service = getServiceType(tx)
               if (service && serviceBreakdown[service as keyof typeof serviceBreakdown]) {
                 serviceBreakdown[service as keyof typeof serviceBreakdown].amount += tx.amount
                 serviceBreakdown[service as keyof typeof serviceBreakdown].count += 1
@@ -277,21 +294,43 @@ if (loading || profileLoading || walletLoading) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentTransactions?.length > 0 ? recentTransactions.slice(0, 5).map((tx) => (
+              {recentTransactions?.length > 0 ? recentTransactions.slice(0, 5).map((tx) => {
+                // Helper function to determine service type from transaction data
+                const getServiceType = (transaction: any): string | null => {
+                  // Try to extract service type from description
+                  const desc = transaction.description?.toLowerCase() || ''
+                  if (desc.includes('airtime')) return 'airtime'
+                  if (desc.includes('data')) return 'data'
+                  if (desc.includes('cable')) return 'cable'
+                  if (desc.includes('electricity')) return 'electricity'
+                  
+                  // Try to get from metadata if available
+                  const serviceType = transaction.metadata?.serviceType || transaction.metadata?.service
+                  if (serviceType && ['airtime', 'data', 'cable', 'electricity'].includes(serviceType)) {
+                    return serviceType
+                  }
+                  
+                  return null
+                }
+                
+                const serviceType = getServiceType(tx)
+                
+                return (
                 <div key={tx.id} className="flex items-center justify-between rounded-lg border p-3">
                   <div className="flex items-center gap-3">
                     <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                      tx.type === "airtime" ? "bg-blue-100 text-blue-600"
-                      : tx.type === "data" ? "bg-green-100 text-green-600"
-                      : tx.type === "cable" ? "bg-purple-100 text-purple-600"
-                      : tx.type === "electricity" ? "bg-yellow-100 text-yellow-600"
+                      serviceType === "airtime" ? "bg-blue-100 text-blue-600"
+                      : serviceType === "data" ? "bg-green-100 text-green-600"
+                      : serviceType === "cable" ? "bg-purple-100 text-purple-600"
+                      : serviceType === "electricity" ? "bg-yellow-100 text-yellow-600"
+                      : tx.type === "credit" ? "bg-green-100 text-green-600"
                       : "bg-gray-100 text-gray-600"
                     }`}>
-                      {tx.type === "airtime" && <Phone className="h-5 w-5" />}
-                      {tx.type === "data" && <Wifi className="h-5 w-5" />}
-                      {tx.type === "cable" && <Tv className="h-5 w-5" />}
-                      {tx.type === "electricity" && <Zap className="h-5 w-5" />}
-                      {!tx.type && <CreditCard className="h-5 w-5" />}
+                      {serviceType === "airtime" && <Phone className="h-5 w-5" />}
+                      {serviceType === "data" && <Wifi className="h-5 w-5" />}
+                      {serviceType === "cable" && <Tv className="h-5 w-5" />}
+                      {serviceType === "electricity" && <Zap className="h-5 w-5" />}
+                      {!serviceType && <CreditCard className="h-5 w-5" />}
                     </div>
                     <div>
                       <div className="font-medium">{tx.description}</div>
@@ -312,7 +351,8 @@ if (loading || profileLoading || walletLoading) {
                     </div>
                   </div>
                 </div>
-              )) : (
+                )
+              }) : (
                 <div className="text-center py-8 text-muted-foreground">
                   No recent transactions found
                 </div>
