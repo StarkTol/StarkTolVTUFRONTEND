@@ -108,7 +108,8 @@ export default function DashboardPage() {
             }
             
             recentTransactions.forEach(tx => {
-              const service = tx.category || tx.type
+              // WalletTransaction only has 'type' property, not 'category'
+              const service = tx.type
               if (service && serviceBreakdown[service as keyof typeof serviceBreakdown]) {
                 serviceBreakdown[service as keyof typeof serviceBreakdown].amount += tx.amount
                 serviceBreakdown[service as keyof typeof serviceBreakdown].count += 1
@@ -280,17 +281,17 @@ if (loading || profileLoading || walletLoading) {
                 <div key={tx.id} className="flex items-center justify-between rounded-lg border p-3">
                   <div className="flex items-center gap-3">
                     <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                      tx.category === "airtime" || tx.type === "airtime" ? "bg-blue-100 text-blue-600"
-                      : tx.category === "data" || tx.type === "data" ? "bg-green-100 text-green-600"
-                      : tx.category === "cable" || tx.type === "cable" ? "bg-purple-100 text-purple-600"
-                      : tx.category === "electricity" || tx.type === "electricity" ? "bg-yellow-100 text-yellow-600"
+                      tx.type === "airtime" ? "bg-blue-100 text-blue-600"
+                      : tx.type === "data" ? "bg-green-100 text-green-600"
+                      : tx.type === "cable" ? "bg-purple-100 text-purple-600"
+                      : tx.type === "electricity" ? "bg-yellow-100 text-yellow-600"
                       : "bg-gray-100 text-gray-600"
                     }`}>
-                      {(tx.category === "airtime" || tx.type === "airtime") && <Phone className="h-5 w-5" />}
-                      {(tx.category === "data" || tx.type === "data") && <Wifi className="h-5 w-5" />}
-                      {(tx.category === "cable" || tx.type === "cable") && <Tv className="h-5 w-5" />}
-                      {(tx.category === "electricity" || tx.type === "electricity") && <Zap className="h-5 w-5" />}
-                      {(!tx.category && !tx.type) && <CreditCard className="h-5 w-5" />}
+                      {tx.type === "airtime" && <Phone className="h-5 w-5" />}
+                      {tx.type === "data" && <Wifi className="h-5 w-5" />}
+                      {tx.type === "cable" && <Tv className="h-5 w-5" />}
+                      {tx.type === "electricity" && <Zap className="h-5 w-5" />}
+                      {!tx.type && <CreditCard className="h-5 w-5" />}
                     </div>
                     <div>
                       <div className="font-medium">{tx.description}</div>
