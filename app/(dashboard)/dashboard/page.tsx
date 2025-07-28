@@ -82,7 +82,7 @@ export default function DashboardPage() {
           if (recentTransactions && recentTransactions.length > 0) {
             const totalTransactions = recentTransactions.length
             const totalSpent = recentTransactions
-              .filter(tx => tx.type !== 'credit' && tx.status === 'completed')
+              .filter(tx => tx.type !== 'credit' && tx.status === 'success')
               .reduce((sum, tx) => sum + tx.amount, 0)
             
             const monthlyTransactions = recentTransactions.filter(tx => {
@@ -93,10 +93,10 @@ export default function DashboardPage() {
             })
             
             const monthlySpending = monthlyTransactions
-              .filter(tx => tx.type !== 'credit' && tx.status === 'completed')
+              .filter(tx => tx.type !== 'credit' && tx.status === 'success')
               .reduce((sum, tx) => sum + tx.amount, 0)
               
-            const successCount = recentTransactions.filter(tx => tx.status === 'completed').length
+            const successCount = recentTransactions.filter(tx => tx.status === 'success').length
             const successRate = totalTransactions > 0 ? successCount / totalTransactions : 0
             
             // Basic service breakdown
@@ -302,11 +302,11 @@ if (loading || profileLoading || walletLoading) {
                   <div className="text-right">
                     <div className="font-medium">₦{tx.amount.toLocaleString()}</div>
                     <div className={`text-sm ${
-                      tx.status === "completed" ? "text-green-600"
+                      tx.status === "success" ? "text-green-600"
                       : tx.status === "pending" ? "text-yellow-600"
                       : "text-red-600"
                     }`}>
-                      {tx.status === "completed" ? "Successful" : 
+                      {tx.status === "success" ? "Successful" : 
                        tx.status === "pending" ? "Pending" : "Failed"}
                     </div>
                   </div>

@@ -6,7 +6,8 @@
  */
 
 // Export HTTP Client
-export { httpClient, HttpClient } from './httpClient'
+export { httpClient } from './httpClient'
+export { default as HttpClient } from './httpClient'
 export type { 
   ApiError,
   ApiResponse,
