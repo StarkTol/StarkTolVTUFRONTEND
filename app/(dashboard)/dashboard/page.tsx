@@ -195,7 +195,7 @@ if (loading || profileLoading || walletLoading) {
   // Calculate display values from real user data
   const walletBalance = balance ? `₦${balance.balance.toLocaleString()}` : '₦0.00'
   const totalSpent = stats?.totalSpent || 0
-  const referralBonus = profile?.referralCode ? 0 : 0 // TODO: Add referral bonus field
+  const referralBonus = profile?.referral_bonus || 0
 
   return (
     <div className="space-y-8">
