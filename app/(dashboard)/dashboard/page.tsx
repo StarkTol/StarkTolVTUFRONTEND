@@ -86,7 +86,7 @@ export default function DashboardPage() {
               .reduce((sum, tx) => sum + tx.amount, 0)
             
             const monthlyTransactions = recentTransactions.filter(tx => {
-              const txDate = new Date(tx.createdAt)
+              const txDate = new Date(tx.date)
               const currentMonth = new Date()
               return txDate.getMonth() === currentMonth.getMonth() && 
                      txDate.getFullYear() === currentMonth.getFullYear()
@@ -295,7 +295,7 @@ if (loading || profileLoading || walletLoading) {
                     <div>
                       <div className="font-medium">{tx.description}</div>
                       <div className="text-sm text-muted-foreground">
-                        {new Date(tx.createdAt).toLocaleDateString()}
+                        {new Date(tx.date).toLocaleDateString()}
                       </div>
                     </div>
                   </div>
