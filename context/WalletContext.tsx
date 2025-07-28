@@ -92,7 +92,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       throw new Error('User not authenticated');
     }
 
-    try {
+      try {
       setError(null);
       const response = await paymentService.initiatePayment({
         amount,
@@ -100,7 +100,16 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       });
 
       console.log('💳 Payment initiated:', response);
-      return response;
+
+      if (!response.success) {
+        throw new Error(response.message || 'Payment initiation failed');
+      }
+
+      if (!response.data) {
+        throw new Error('Payment initiation response missing data');
+      }
+
+      return response.data;
     } catch (err: any) {
       console.error('❌ Failed to initiate payment:', err);
       setError(err.message);
