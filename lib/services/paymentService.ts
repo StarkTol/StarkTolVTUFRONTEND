@@ -68,13 +68,19 @@ class PaymentService {
    */
 async initiatePayment(request: PaymentInitiateRequest): Promise<ApiResponse<{ paymentLink: string; txRef: string }>> {
     try {
-      const response = await api.post<{ paymentLink: string; txRef: string }>('/api/payment/initiate', {
-        amount: request.amount,
-        metadata: request.metadata
-      })
+      // Use the versioned backend endpoint (matches /api/v1/payment/initiate)
+      const response = await api.post<{ paymentLink: string; payment_link?: string; txRef: string; tx_ref?: string }>(
+        '/api/v1/payment/initiate',
+        {
+          amount: request.amount,
+          metadata: request.metadata
+        }
+      )
 
       // The Next.js API route returns { paymentLink, txRef } directly on success
-      const { paymentLink, txRef } = response.data
+      // Support both camelCase and snake_case keys returned by the backend
+      const paymentLink = (response.data as any).paymentLink || (response.data as any).payment_link
+      const txRef = (response.data as any).txRef || (response.data as any).tx_ref
 
       if (!paymentLink || !txRef) {
         return ApiErrorHandler.createResponse(false, 'Invalid payment response: missing payment link or transaction reference', undefined, {
