@@ -139,7 +139,8 @@ export const WalletDataProvider = ({ children }: { children: React.ReactNode }) 
 
       // Fetch wallet balance
       const balanceResult = await WalletApiService.getWalletBalance()
-      const balance = balanceResult.success ? balanceResult.data : null
+      const balance: WalletBalance | null =
+        balanceResult.success && balanceResult.data ? balanceResult.data : null
 
       // Fetch recent transactions
       const transactionsResult = await WalletApiService.getWalletTransactions(10)
@@ -147,7 +148,8 @@ export const WalletDataProvider = ({ children }: { children: React.ReactNode }) 
 
       // Fetch wallet stats
       const statsResult = await WalletApiService.getWalletStats('month')
-      const stats = statsResult.success ? statsResult.data : null
+      const stats: WalletStats | null =
+        statsResult.success && statsResult.data ? statsResult.data : null
 
       setWalletData({
         balance,
