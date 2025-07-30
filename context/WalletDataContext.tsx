@@ -35,6 +35,14 @@ interface PlanCache {
   lastUpdated: Record<string, number>
 }
 
+// Re-useable type for stats so it can be referenced safely
+export interface WalletStats {
+  totalInflow: number
+  totalOutflow: number
+  transactionCount: number
+  averageTransaction: number
+}
+
 interface WalletData {
   balance: WalletBalance | null
   recentTransactions: WalletTransaction[]
