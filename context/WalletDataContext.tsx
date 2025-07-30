@@ -237,7 +237,7 @@ export const WalletDataProvider = ({ children }: { children: React.ReactNode }) 
   // Provider cache methods
   const isProviderCacheValid = useCallback((service: string): boolean => {
     const lastUpdated = cacheData.providers.lastUpdated[service]
-    return lastUpdated && (Date.now() - lastUpdated) < CACHE_DURATION
+    return !!lastUpdated && (Date.now() - lastUpdated) < CACHE_DURATION
   }, [cacheData.providers.lastUpdated])
 
   const getProviders = useCallback(async (service: 'airtime' | 'data' | 'cable' | 'electricity'): Promise<any[]> => {
@@ -360,7 +360,7 @@ export const WalletDataProvider = ({ children }: { children: React.ReactNode }) 
   const isPlanCacheValid = useCallback((service: string, providerId: string): boolean => {
     const cacheKey = `${service}-${providerId}`
     const lastUpdated = cacheData.plans.lastUpdated[cacheKey]
-    return lastUpdated && (Date.now() - lastUpdated) < CACHE_DURATION
+    return !!lastUpdated && (Date.now() - lastUpdated) < CACHE_DURATION
   }, [cacheData.plans.lastUpdated])
 
   const getDataBundles = useCallback(async (providerId: string): Promise<DataBundle[]> => {
@@ -643,3 +643,4 @@ export const useWalletData = () => {
   }
   return context
 }
+
