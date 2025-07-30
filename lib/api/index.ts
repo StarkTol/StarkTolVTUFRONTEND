@@ -27,6 +27,15 @@ export { default as WalletApiService } from './wallet'
 export { default as ExamCardsApiService } from './exam-cards'
 export { default as RechargeCardsApiService } from './recharge-cards'
 
+// Import service classes for the convenience object
+import AirtimeApiService from './airtime'
+import DataApiService from './data'
+import CableApiService from './cable'
+import ElectricityApiService from './electricity'
+import WalletApiService from './wallet'
+import ExamCardsApiService from './exam-cards'
+import RechargeCardsApiService from './recharge-cards'
+
 // Convenience object with all services
 export const ApiServices = {
   Airtime: AirtimeApiService,

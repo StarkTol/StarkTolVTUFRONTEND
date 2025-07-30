@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
-import api from "@/lib/api"
+import api from "@/lib/axios-instance"
 
 export default function LoginPage() {
   const router = useRouter()

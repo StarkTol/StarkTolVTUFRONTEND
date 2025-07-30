@@ -1,4 +1,4 @@
-import api from '@/lib/api'
+import api from '@/lib/axios-instance'
 import { executeApiRequest } from './error-handler'
 import { 
   ElectricityProvider,

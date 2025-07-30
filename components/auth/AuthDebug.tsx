@@ -3,7 +3,7 @@
 import { useAuth } from "@/context/authContext"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import api from "@/lib/api"
+import api from "@/lib/axios-instance"
 import { useState } from "react"
 
 export default function AuthDebug() {
