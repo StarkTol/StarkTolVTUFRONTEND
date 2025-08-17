@@ -38,6 +38,15 @@ const api = axios.create({
   withCredentials: false, // Don't send cookies for CORS
 })
 
+// Global error logging for all API calls
+api.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('❌ [Axios Error]', error);
+    return Promise.reject(error);
+  }
+);
+
 console.log('🔧 [API] Auto-detected Base URL:', api.defaults.baseURL)
 console.log('🔧 [API] Hostname:', typeof window !== 'undefined' ? window.location.hostname : 'SSR')
 
