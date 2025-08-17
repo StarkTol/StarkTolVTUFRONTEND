@@ -170,7 +170,8 @@ export default function RegisterPage() {
 
     try {
       const payload = {
-        full_name: `${formData.first_name.trim()} ${formData.last_name.trim()}`,
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
         email: formData.email.trim().toLowerCase(),
         phone: formData.phone.trim(),
         password: formData.password,
