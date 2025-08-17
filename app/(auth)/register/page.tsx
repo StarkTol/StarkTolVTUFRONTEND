@@ -170,12 +170,12 @@ export default function RegisterPage() {
 
     try {
       const payload = {
-        first_name: formData.first_name.trim(),
-        last_name: formData.last_name.trim(),
+        full_name: `${formData.first_name.trim()} ${formData.last_name.trim()}`,
         email: formData.email.trim().toLowerCase(),
-        phone_number: formData.phone.trim(),
+        phone: formData.phone.trim(),
         password: formData.password,
         confirm_password: formData.confirm_password,
+        agreeTerms: formData.agreeTerms,
       }
 
       console.log("🚀 [Register] Submitting registration:", {
