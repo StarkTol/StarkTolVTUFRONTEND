@@ -185,7 +185,7 @@ export default function RegisterPage() {
         confirm_password: "[HIDDEN]"
       })
 
-  const response = await api.post("/api/auth/register", payload)
+  const response = await api.post("/auth/register", payload)
 
       console.log("✅ [Register] Registration response:", response.data)
 
