@@ -8,7 +8,7 @@ export default function AuthLayout({
   children: React.ReactNode
 }>) {
   return (
-    <div className="relative flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col">
       <header className="absolute left-0 top-0 z-50 w-full">
         <div className="container flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
@@ -20,9 +20,9 @@ export default function AuthLayout({
         </div>
       </header>
       <main className="flex-1">{children}</main>
-      <div className="absolute bottom-4 left-0 w-full text-center text-sm text-muted-foreground">
+      <footer className="w-full text-center text-sm text-muted-foreground py-6">
         &copy; {new Date().getFullYear()} StarkTol VTU. All rights reserved.
-      </div>
+      </footer>
     </div>
   )
 }
