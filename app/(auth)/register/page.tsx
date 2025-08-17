@@ -66,7 +66,7 @@ export default function RegisterPage() {
     setEmailCheckResult(null)
 
     try {
-      const response = await api.get(`/auth/check-email?email=${encodeURIComponent(email.toLowerCase())}`)
+      const response = await api.get(`/api/auth/check-email?email=${encodeURIComponent(email.toLowerCase())}`)
       
       if (response.data.available === false) {
         setEmailCheckResult("This email is already registered. Please use a different email.")
@@ -184,7 +184,7 @@ export default function RegisterPage() {
         confirm_password: "[HIDDEN]"
       })
 
-      const response = await api.post("/auth/register", payload)
+  const response = await api.post("/api/auth/register", payload)
 
       console.log("✅ [Register] Registration response:", response.data)
 
