@@ -38,11 +38,34 @@ const api = axios.create({
   withCredentials: false, // Don't send cookies for CORS
 })
 
-// Global error logging for all API calls
-api.interceptors.response.use(
-  response => response,
+// Global logging for all API requests and responses
+api.interceptors.request.use(
+  config => {
+    console.log(`➡️ [Axios Request] ${config.method?.toUpperCase()} ${config.url}`);
+    if (config.data) {
+      console.log('   [Request Body]', config.data);
+    }
+    return config;
+  },
   error => {
-    console.error('❌ [Axios Error]', error);
+    console.error('❌ [Axios Request Error]', error);
+    return Promise.reject(error);
+  }
+);
+
+api.interceptors.response.use(
+  response => {
+    console.log(`✅ [Axios Response] ${response.config.method?.toUpperCase()} ${response.config.url}`);
+    console.log('   [Response Data]', response.data);
+    return response;
+  },
+  error => {
+    if (error.response) {
+      console.error(`🚫 [Axios Response Error] ${error.config.method?.toUpperCase()} ${error.config.url}`);
+      console.error('   [Error Data]', error.response.data);
+    } else {
+      console.error('❌ [Axios Network/Error]', error);
+    }
     return Promise.reject(error);
   }
 );
