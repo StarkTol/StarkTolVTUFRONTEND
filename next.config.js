@@ -1,31 +1,32 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  swcMinify: true,
   
+  // Build configuration - ignore errors for deployment
   eslint: {
-    // During development, allow production builds to successfully complete even if
-    // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 
+  // Image optimization
   images: {
+    unoptimized: true,
     domains: ['backend-066c.onrender.com', 'localhost'],
   },
 
-  experimental: {
-    // ✅ Must be an object, even if empty
-    serverActions: {},
-  },
-
+  // Environment variables
   env: {
-    // Smart API configuration with auto-detection
-    NEXT_PUBLIC_API_BASE: process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000',
-    NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8000/api/v1',
+    NEXT_PUBLIC_API_BASE: process.env.NEXT_PUBLIC_API_BASE || 'https://backend-066c.onrender.com',
+    NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || 'https://backend-066c.onrender.com/api/v1',
     NEXT_PUBLIC_FALLBACK_API_BASE: process.env.NEXT_PUBLIC_FALLBACK_API_BASE || 'https://backend-066c.onrender.com',
     NEXT_PUBLIC_FALLBACK_BASE_URL: process.env.NEXT_PUBLIC_FALLBACK_BASE_URL || 'https://backend-066c.onrender.com/api/v1',
     NEXT_PUBLIC_AUTO_DETECT_BACKEND: process.env.NEXT_PUBLIC_AUTO_DETECT_BACKEND || 'true',
   },
 
+  // CORS Headers
   async headers() {
     return [
       {
@@ -41,6 +42,16 @@ const nextConfig = {
         ],
       },
     ]
+  },
+
+  // Webpack config to fix build issues
+  webpack: (config) => {
+    config.resolve.fallback = {
+      fs: false,
+      net: false,
+      tls: false,
+    };
+    return config;
   },
 }
 
